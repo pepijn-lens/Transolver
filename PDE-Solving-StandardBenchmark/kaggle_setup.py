@@ -18,12 +18,16 @@ DATA_ROOT = '/kaggle/input/datasets/thegreenier/transolver-data-group9'
 
 
 # ── 1. Install dependencies ──────────────────────────────────────────────────
+# Kaggle already ships PyTorch 2.x, scipy, h5py, and numpy.
+# requirements.txt pins torch==1.10.1 (unavailable) and dgl (not needed for
+# Elasticity/Darcy), so we install only the two missing packages explicitly.
 print('=== Installing dependencies ===')
 subprocess.run(
-    [sys.executable, '-m', 'pip', 'install', '-q', '-r',
-     os.path.join(REPO, 'requirements.txt')],
+    [sys.executable, '-m', 'pip', 'install', '-q', 'einops==0.6.1', 'timm==0.9.2'],
     check=True,
 )
+print('torch version:', end=' ')
+subprocess.run([sys.executable, '-c', 'import torch; print(torch.__version__)'])
 
 
 # ── 2. Locate data files ─────────────────────────────────────────────────────
