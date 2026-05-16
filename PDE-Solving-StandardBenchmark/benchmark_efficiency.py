@@ -41,6 +41,12 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 device = torch.device('cuda')
 
 N, B = 1024, 1
+
+# Reset peak memory BEFORE model creation so we capture model weights +
+# optimizer state (m, v buffers) + activations — matching the paper's
+# "total GPU memory during training" measurement.
+torch.cuda.reset_peak_memory_stats(device)
+
 x = torch.randn(B, N, 2, device=device)
 dummy_y = torch.zeros(B, N, device=device)
 
@@ -61,7 +67,7 @@ model = Model(
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 loss_fn = nn.MSELoss()
 
-# Warmup
+# Warmup (optimizer state buffers are allocated on the first step)
 model.train()
 for _ in range(args.n_warmup):
     optimizer.zero_grad()
@@ -69,9 +75,8 @@ for _ in range(args.n_warmup):
     loss_fn(out, dummy_y).backward()
     optimizer.step()
 
-# Benchmark
+# Benchmark — do NOT reset peak stats here; we want to include everything above
 torch.cuda.synchronize()
-torch.cuda.reset_peak_memory_stats(device)
 t0 = time.perf_counter()
 
 for _ in range(args.n_steps):

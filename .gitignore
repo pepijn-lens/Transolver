@@ -57,6 +57,10 @@ cover/
 
 # Django stuff:
 *.log
+!PDE-Solving-StandardBenchmark/logs/*.log
+
+# Model checkpoints (too large for GitHub)
+PDE-Solving-StandardBenchmark/checkpoints/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
