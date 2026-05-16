@@ -16,7 +16,7 @@ TASK=${1:?Usage: run_table4.sh <elas|darcy> <GPU0_SLICES> <GPU1_SLICES>}
 GPU0_SLICES=($2)
 GPU1_SLICES=($3)
 
-EPOCHS=200
+EPOCHS=300
 mkdir -p logs checkpoints results
 
 # ---- per-config training command ----
