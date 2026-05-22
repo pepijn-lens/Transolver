@@ -38,6 +38,8 @@ class Physics_Attention_Irregular_Mesh(nn.Module):
         x_mid = self.in_project_x(x).reshape(B, N, self.heads, self.dim_head) \
             .permute(0, 2, 1, 3).contiguous()  # B H N C
         slice_weights = self.softmax(self.in_project_slice(x_mid) / self.temperature)  # B H N G
+        # Expose last-computed slice weights for downstream visualization (Figure 5a).
+        self.last_slice_weights = slice_weights.detach()
         slice_norm = slice_weights.sum(2)  # B H G
         slice_token = torch.einsum("bhnc,bhng->bhgc", fx_mid, slice_weights)
         slice_token = slice_token / ((slice_norm + 1e-5)[:, :, :, None].repeat(1, 1, 1, self.dim_head))
