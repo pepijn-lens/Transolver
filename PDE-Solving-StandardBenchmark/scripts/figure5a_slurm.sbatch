@@ -24,7 +24,7 @@ BENCH_DIR="${BENCH_DIR:-${REPO_ROOT}/PDE-Solving-StandardBenchmark}"
 DATA_PATH="${DATA_PATH:-/scratch/plens/FRML/data}"
 RESULTS_DIR="${RESULTS_DIR:-${BENCH_DIR}/results_figure5a}"
 SAVE_NAME="${SAVE_NAME:-elas_figure5a}"
-VENV_DIR="${VENV_DIR:-${REPO_ROOT}/.venv_figure5a}"
+CONDA_ENV="${CONDA_ENV:-figure5a}"
 EPOCHS="${EPOCHS:-300}"
 
 cd "${BENCH_DIR}"
@@ -35,19 +35,12 @@ mkdir -p "${RESULTS_DIR}" ./checkpoints ./logs
 # ---------------------------------------------------------------------------
 module purge
 module load 2024r1 || module load 2023r1 || true
-module load python || true
+module load miniconda3
 module load cuda || true
 
-if [ ! -d "${VENV_DIR}" ]; then
-    python -m venv "${VENV_DIR}"
-    "${VENV_DIR}/bin/pip" install --upgrade pip
-    "${VENV_DIR}/bin/pip" install \
-        torch --index-url https://download.pytorch.org/whl/cu121
-    "${VENV_DIR}/bin/pip" install \
-        einops==0.6.1 timm==0.9.2 matplotlib numpy scipy tqdm h5py
-fi
 # shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate "${CONDA_ENV}"
 
 python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
 
