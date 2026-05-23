@@ -1,0 +1,206 @@
+Dataloading is over.
+Namespace(lr=0.001, epochs=300, weight_decay=1e-05, model='Transolver_Structured_Mesh_2D', n_hidden=128, n_layers=8, n_heads=8, batch_size=4, gpu='0', max_grad_norm=0.1, downsample=5, mlp_ratio=1, dropout=0.0, ntrain=1000, unified_pos=1, ref=8, slice_num=64, eval=0, save_name='darcy_M64', data_path='/kaggle/input/datasets/thegreenier/transolver-data-group9/Darcy_421')
+Model(
+  (preprocess): MLP(
+    (linear_pre): Sequential(
+      (0): Linear(in_features=65, out_features=256, bias=True)
+      (1): GELU(approximate='none')
+    )
+    (linear_post): Linear(in_features=256, out_features=128, bias=True)
+    (linears): ModuleList()
+  )
+  (blocks): ModuleList(
+    (0-6): 7 x Transolver_block(
+      (ln_1): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (Attn): Physics_Attention_Structured_Mesh_2D(
+        (softmax): Softmax(dim=-1)
+        (dropout): Dropout(p=0.0, inplace=False)
+        (in_project_x): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (in_project_fx): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (in_project_slice): Linear(in_features=16, out_features=64, bias=True)
+        (to_q): Linear(in_features=16, out_features=16, bias=False)
+        (to_k): Linear(in_features=16, out_features=16, bias=False)
+        (to_v): Linear(in_features=16, out_features=16, bias=False)
+        (to_out): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (ln_2): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp): MLP(
+        (linear_pre): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): GELU(approximate='none')
+        )
+        (linear_post): Linear(in_features=128, out_features=128, bias=True)
+        (linears): ModuleList()
+      )
+    )
+    (7): Transolver_block(
+      (ln_1): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (Attn): Physics_Attention_Structured_Mesh_2D(
+        (softmax): Softmax(dim=-1)
+        (dropout): Dropout(p=0.0, inplace=False)
+        (in_project_x): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (in_project_fx): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (in_project_slice): Linear(in_features=16, out_features=64, bias=True)
+        (to_q): Linear(in_features=16, out_features=16, bias=False)
+        (to_k): Linear(in_features=16, out_features=16, bias=False)
+        (to_v): Linear(in_features=16, out_features=16, bias=False)
+        (to_out): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (ln_2): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp): MLP(
+        (linear_pre): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): GELU(approximate='none')
+        )
+        (linear_post): Linear(in_features=128, out_features=128, bias=True)
+        (linears): ModuleList()
+      )
+      (ln_3): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp2): Linear(in_features=128, out_features=1, bias=True)
+    )
+  )
+)
+Total Trainable Params: 2826945
+Epoch 0 Reg : 1.43148 Train loss : 0.25362
+rel_err:0.22887695666307906
+save model
+Epoch 1 Reg : 1.11237 Train loss : 0.21035
+rel_err:0.18695334794212357
+Epoch 2 Reg : 0.89870 Train loss : 0.16135
+rel_err:0.13209486256773373
+Epoch 3 Reg : 0.79260 Train loss : 0.13532
+rel_err:0.12173161946489913
+Epoch 4 Reg : 0.75106 Train loss : 0.12552
+rel_err:0.1258037941646367
+Epoch 5 Reg : 0.74105 Train loss : 0.12425
+rel_err:0.11441221710183325
+Epoch 6 Reg : 0.70434 Train loss : 0.12072
+rel_err:0.108773485541969
+Epoch 7 Reg : 0.67062 Train loss : 0.11164
+rel_err:0.1063192547875964
+Epoch 8 Reg : 0.64804 Train loss : 0.10567
+rel_err:0.09627311133525479
+Epoch 9 Reg : 0.63578 Train loss : 0.10305
+rel_err:0.10534395072772944
+Epoch 10 Reg : 0.63682 Train loss : 0.10274
+rel_err:0.10407444124628347
+Epoch 11 Reg : 0.60858 Train loss : 0.09650
+rel_err:0.08765588654116603
+Epoch 12 Reg : 0.60131 Train loss : 0.09717
+rel_err:0.08302750331075194
+Epoch 13 Reg : 0.57389 Train loss : 0.08847
+rel_err:0.08902591685902025
+Epoch 14 Reg : 0.58747 Train loss : 0.09176
+rel_err:0.09086770218721091
+Epoch 15 Reg : 0.54818 Train loss : 0.08318
+rel_err:0.08225939266425336
+Epoch 16 Reg : 0.53780 Train loss : 0.08267
+rel_err:0.08235949165704697
+Epoch 17 Reg : 0.49193 Train loss : 0.07452
+rel_err:0.06640096779597991
+Epoch 18 Reg : 0.44697 Train loss : 0.06627
+rel_err:0.06746963191645589
+Epoch 19 Reg : 0.44465 Train loss : 0.06947
+rel_err:0.06216101836676276
+Epoch 20 Reg : 0.41326 Train loss : 0.06207
+rel_err:0.05725079779132734
+Epoch 21 Reg : 0.40722 Train loss : 0.06006
+rel_err:0.06104994729341437
+Epoch 22 Reg : 0.39944 Train loss : 0.06064
+rel_err:0.06574644104054067
+Epoch 23 Reg : 0.39097 Train loss : 0.05938
+rel_err:0.04936749088653111
+Epoch 24 Reg : 0.39928 Train loss : 0.05991
+rel_err:0.05039895609290945
+Epoch 25 Reg : 0.37024 Train loss : 0.05268
+rel_err:0.050434135729156955
+Epoch 26 Reg : 0.36397 Train loss : 0.05245
+rel_err:0.04618007516862955
+Epoch 27 Reg : 0.35990 Train loss : 0.05072
+rel_err:0.0473450880389554
+Epoch 28 Reg : 0.35790 Train loss : 0.04935
+rel_err:0.04812148647708738
+Epoch 29 Reg : 0.34445 Train loss : 0.04813
+rel_err:0.04304538047425645
+Epoch 30 Reg : 0.33857 Train loss : 0.04655
+rel_err:0.03848025051729515
+Epoch 31 Reg : 0.33142 Train loss : 0.04508
+rel_err:0.04475121960500408
+Epoch 32 Reg : 0.32015 Train loss : 0.04355
+rel_err:0.04610339856572494
+Epoch 33 Reg : 0.31108 Train loss : 0.04328
+rel_err:0.04341625382326196
+Epoch 34 Reg : 0.30187 Train loss : 0.04052
+rel_err:0.04354591948697491
+Epoch 35 Reg : 0.30930 Train loss : 0.04268
+rel_err:0.04268397968693757
+Epoch 36 Reg : 0.30877 Train loss : 0.04258
+rel_err:0.03807672120202883
+Epoch 37 Reg : 0.28920 Train loss : 0.04072
+rel_err:0.047108063698385896
+Epoch 38 Reg : 0.28773 Train loss : 0.04004
+rel_err:0.04088427770719173
+Epoch 39 Reg : 0.27528 Train loss : 0.03921
+rel_err:0.03742758679266725
+Epoch 40 Reg : 0.26689 Train loss : 0.03778
+rel_err:0.03279103512916864
+Epoch 41 Reg : 0.26317 Train loss : 0.03698
+rel_err:0.03334532698414049
+Epoch 42 Reg : 0.26165 Train loss : 0.03731
+rel_err:0.03686101083446189
+Epoch 43 Reg : 0.25979 Train loss : 0.03726
+rel_err:0.039926467939583744
+Epoch 44 Reg : 0.25342 Train loss : 0.03677
+rel_err:0.03816764727713169
+Epoch 45 Reg : 0.25169 Train loss : 0.03657
+rel_err:0.03440083266743066
+Epoch 46 Reg : 0.24956 Train loss : 0.03587
+rel_err:0.04288169070688967
+Epoch 47 Reg : 0.23925 Train loss : 0.03388
+rel_err:0.03705528373328503
+Epoch 48 Reg : 0.24155 Train loss : 0.03550
+rel_err:0.04158201668742379
+Epoch 49 Reg : 0.23868 Train loss : 0.03523
+rel_err:0.03373077853385054
+Epoch 50 Reg : 0.23329 Train loss : 0.03430
+rel_err:0.036545391252302016
+Epoch 51 Reg : 0.22598 Train loss : 0.03328
+rel_err:0.032729383039590824
+Epoch 52 Reg : 0.22524 Train loss : 0.03256
+rel_err:0.03595731014296885
+Epoch 53 Reg : 0.21703 Train loss : 0.03056
+rel_err:0.03131596281728461
+Epoch 54 Reg : 0.21885 Train loss : 0.03255
+rel_err:0.03299760072861921
+Epoch 55 Reg : 0.21655 Train loss : 0.03219
+rel_err:0.03431025644401038
+Epoch 56 Reg : 0.21638 Train loss : 0.03165
+rel_err:0.031679324790022965
+Epoch 57 Reg : 0.21162 Train loss : 0.03129
+rel_err:0.03191330891187127
+Epoch 58 Reg : 0.20387 Train loss : 0.03012
+rel_err:0.028240263253341277
+Epoch 59 Reg : 0.20940 Train loss : 0.03083
+rel_err:0.032225279132920615
+Epoch 60 Reg : 0.20706 Train loss : 0.03137
+rel_err:0.028280962193362357
+Epoch 61 Reg : 0.19710 Train loss : 0.02990
+rel_err:0.029982375461968736
+Epoch 62 Reg : 0.19863 Train loss : 0.02933
+rel_err:0.025639862334731506
+Epoch 63 Reg : 0.19098 Train loss : 0.02765
+rel_err:0.0290428125931819
+Epoch 64 Reg : 0.19183 Train loss : 0.02839
+rel_err:0.03685383857098806
+Epoch 65 Reg : 0.19672 Train loss : 0.02997
+rel_err:0.02677285739365785
+Epoch 66 Reg : 0.18027 Train loss : 0.02718
+rel_err:0.0252862576532272
+Epoch 67 Reg : 0.19201 Train loss : 0.02902
+rel_err:0.026275383390864486
