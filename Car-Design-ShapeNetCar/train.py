@@ -74,7 +74,7 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def main(device, train_dataset, val_dataset, Net, hparams, path, reg=1, val_iter=1, coef_norm=[]):
+def main(device, train_dataset, val_dataset, Net, hparams, path, reg=1, val_iter=1, coef_norm=[], resume=False):
     model = Net.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=hparams['lr'])
     lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
@@ -83,10 +83,22 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, reg=1, val_iter
         total_steps=(len(train_dataset) // hparams['batch_size'] + 1) * hparams['nb_epochs'],
         final_div_factor=1000.,
     )
+    start_epoch = 0
+    checkpoint_file = os.path.join(path, 'latest_checkpoint.pth')
+    
+    if resume and os.path.exists(checkpoint_file):
+        print(f"--> Loading checkpoint from {checkpoint_file}")
+        checkpoint = torch.load(checkpoint_file, map_location=device, weights_only=False)
+        model = checkpoint['model']
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
+        print(f"--> Resuming training from epoch {start_epoch}")
+
     start = time.time()
 
     train_loss, val_loss = 1e5, 1e5
-    pbar_train = tqdm(range(hparams['nb_epochs']), position=0)
+    pbar_train = tqdm(range(start_epoch, hparams['nb_epochs']), position=0, initial=start_epoch, total=hparams['nb_epochs'])
     for epoch in pbar_train:
         train_loader = DataLoader(train_dataset, batch_size=hparams['batch_size'], shuffle=True, drop_last=True)
         loss_velo, loss_press = train(device, model, train_loader, optimizer, lr_scheduler, reg=reg)
@@ -103,6 +115,14 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, reg=1, val_iter
             pbar_train.set_postfix(train_loss=train_loss, val_loss=val_loss)
         else:
             pbar_train.set_postfix(train_loss=train_loss)
+        # SAVE CHECKPOINT EVERY 10 EPOCHS
+        if epoch % 10 == 0:
+            torch.save({
+                'epoch': epoch,
+                'model': model,
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': lr_scheduler.state_dict(),
+            }, checkpoint_file)
 
     end = time.time()
     time_elapsed = end - start

@@ -22,6 +22,7 @@ parser.add_argument('--lr', default=0.001, type=float)
 parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--nb_epochs', default=200, type=int)
 parser.add_argument('--preprocessed', default=1, type=int)
+parser.add_argument('--resume', action='store_true', help='Resume from latest checkpoint')
 args = parser.parse_args()
 print(args)
 
@@ -48,4 +49,4 @@ if not os.path.exists(path):
     os.makedirs(path)
 
 model = train.main(device, train_ds, val_ds, model, hparams, path, val_iter=args.val_iter, reg=args.weight,
-                   coef_norm=coef_norm)
+                   coef_norm=coef_norm, resume=args.resume)
