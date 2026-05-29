@@ -1,18 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=transolver_fig5a
-#SBATCH --partition=gpu-a100-small
+#SBATCH --job-name=transolver_darcy_ablation
+#SBATCH --partition=gpu-a100
 #SBATCH --account=education-eemcs-courses-dsait4095
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --gpus-per-task=1
 #SBATCH --mem-per-cpu=7G
 #SBATCH --chdir=/scratch/plens/FRML/Transolver/PDE-Solving-StandardBenchmark
-#SBATCH --output=results_figure5a/slurm-%j.out
-#SBATCH --error=results_figure5a/slurm-%j.err
+#SBATCH --output=results_darcy_ablation/slurm-M%x-%j.out
+#SBATCH --error=results_darcy_ablation/slurm-M%x-%j.err
 
-# Reproduce Figure 5(a) from Transolver: train M=64 on Elasticity, then plot
-# slice weights of the last attention layer on original + resampled meshes.
+# Train Transolver on Darcy for a single slice-count M (Table 4 ablation).
+# Submit one job per M via:
+#   sbatch --job-name=darcy_M128  --export=ALL,SLICE_NUM=128  scripts/darcy_ablation_slurm.sbatch
+# or use scripts/submit_darcy_ablation.sh to fan out all four configs.
 
 set -euo pipefail
 
@@ -21,11 +23,12 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 REPO_ROOT="${REPO_ROOT:-/scratch/plens/FRML/Transolver}"
 BENCH_DIR="${BENCH_DIR:-${REPO_ROOT}/PDE-Solving-StandardBenchmark}"
-DATA_PATH="${DATA_PATH:-/scratch/plens/FRML/data}"
-RESULTS_DIR="${RESULTS_DIR:-${BENCH_DIR}/results_figure5a}"
-SAVE_NAME="${SAVE_NAME:-elas_figure5a}"
+DATA_PATH="${DATA_PATH:-/scratch/plens/FRML/data/darcy}"
+RESULTS_DIR="${RESULTS_DIR:-${BENCH_DIR}/results_darcy_ablation}"
 CONDA_ENV="${CONDA_ENV:-figure5a}"
-EPOCHS="${EPOCHS:-500}"
+EPOCHS="${EPOCHS:-300}"
+SLICE_NUM="${SLICE_NUM:?Set SLICE_NUM (e.g. --export=ALL,SLICE_NUM=128)}"
+SAVE_NAME="${SAVE_NAME:-darcy_M${SLICE_NUM}}"
 
 cd "${BENCH_DIR}"
 mkdir -p "${RESULTS_DIR}" ./checkpoints ./logs
@@ -48,8 +51,8 @@ python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is
 # Sanity check on data presence before launching training.
 # ---------------------------------------------------------------------------
 for f in \
-    "${DATA_PATH}/elasticity/Meshes/Random_UnitCell_sigma_10.npy" \
-    "${DATA_PATH}/elasticity/Meshes/Random_UnitCell_XY_10.npy"; do
+    "${DATA_PATH}/piececonst_r421_N1024_smooth1.mat" \
+    "${DATA_PATH}/piececonst_r421_N1024_smooth2.mat"; do
     if [ ! -f "${f}" ]; then
         echo "Missing data file: ${f}" >&2
         exit 1
@@ -59,40 +62,28 @@ done
 # ---------------------------------------------------------------------------
 # Train.
 # ---------------------------------------------------------------------------
-python exp_elas.py \
+echo "[$(date '+%F %T')] Training Darcy M=${SLICE_NUM} for ${EPOCHS} epochs (save_name=${SAVE_NAME})"
+
+python exp_darcy.py \
     --gpu 0 \
-    --model Transolver_Irregular_Mesh \
+    --model Transolver_Structured_Mesh_2D \
     --n-hidden 128 \
     --n-heads 8 \
     --n-layers 8 \
     --lr 0.001 \
     --max_grad_norm 0.1 \
-    --batch-size 1 \
-    --slice_num 64 \
-    --unified_pos 0 \
+    --batch-size 4 \
+    --slice_num "${SLICE_NUM}" \
+    --unified_pos 1 \
     --ref 8 \
+    --downsample 5 \
     --eval 0 \
     --epochs "${EPOCHS}" \
     --save_name "${SAVE_NAME}" \
     --data_path "${DATA_PATH}" \
-    2>&1 | tee "${RESULTS_DIR}/train.log"
+    2>&1 | tee "./logs/${SAVE_NAME}.log"
 
-# Keep a copy of the checkpoint alongside the figure.
+# Keep a copy of the checkpoint alongside the logs.
 cp "./checkpoints/${SAVE_NAME}.pt" "${RESULTS_DIR}/${SAVE_NAME}.pt"
 
-# ---------------------------------------------------------------------------
-# Visualize Figure 5(a).
-# ---------------------------------------------------------------------------
-python visualize_figure5a.py \
-    --gpu 0 \
-    --checkpoint "./checkpoints/${SAVE_NAME}.pt" \
-    --data_path "${DATA_PATH}" \
-    --slice_num 64 \
-    --n_hidden 128 \
-    --n_layers 8 \
-    --n_heads 8 \
-    --sample_indices "${SAMPLE_INDICES:-0,1,2,3,4,5,6,7}" \
-    --out_dir "${RESULTS_DIR}" \
-    2>&1 | tee "${RESULTS_DIR}/visualize.log"
-
-echo "Done. Outputs in ${RESULTS_DIR}/"
+echo "[$(date '+%F %T')] Done. Log: ./logs/${SAVE_NAME}.log  Ckpt: ${RESULTS_DIR}/${SAVE_NAME}.pt"

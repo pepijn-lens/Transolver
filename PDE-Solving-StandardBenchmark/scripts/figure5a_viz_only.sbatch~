@@ -1,0 +1,46 @@
+#!/bin/bash
+#SBATCH --job-name=transolver_fig5a_viz
+#SBATCH --partition=gpu-a100-small
+#SBATCH --account=education-eemcs-courses-dsait4095
+#SBATCH --time=00:30:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --gpus-per-task=1
+#SBATCH --mem-per-cpu=7G
+#SBATCH --chdir=/scratch/plens/FRML/Transolver/PDE-Solving-StandardBenchmark
+#SBATCH --output=results_figure5a/slurm-%j.out
+#SBATCH --error=results_figure5a/slurm-%j.err
+
+# Re-render the Figure 5(a) sweep from an existing checkpoint without
+# retraining. Useful for tweaking visualization parameters.
+
+set -euo pipefail
+
+REPO_ROOT="${REPO_ROOT:-/scratch/plens/FRML/Transolver}"
+BENCH_DIR="${BENCH_DIR:-${REPO_ROOT}/PDE-Solving-StandardBenchmark}"
+DATA_PATH="${DATA_PATH:-/scratch/plens/FRML/data}"
+RESULTS_DIR="${RESULTS_DIR:-${BENCH_DIR}/results_figure5a}"
+SAVE_NAME="${SAVE_NAME:-elas_figure5a}"
+CONDA_ENV="${CONDA_ENV:-${REPO_ROOT}/.conda_figure5a}"
+
+cd "${BENCH_DIR}"
+mkdir -p "${RESULTS_DIR}"
+
+module load miniconda3
+# shellcheck disable=SC1091
+eval "$(conda shell.bash hook)"
+conda activate "${CONDA_ENV}"
+
+python visualize_figure5a.py \
+    --gpu 0 \
+    --checkpoint "./checkpoints/${SAVE_NAME}.pt" \
+    --data_path "${DATA_PATH}" \
+    --slice_num 64 \
+    --n_hidden 128 \
+    --n_layers 8 \
+    --n_heads 8 \
+    --sample_idx 0 \
+    --out_dir "${RESULTS_DIR}" \
+    2>&1 | tee "${RESULTS_DIR}/visualize.log"
+
+echo "Done. Variants in ${RESULTS_DIR}/"

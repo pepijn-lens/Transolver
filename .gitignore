@@ -166,3 +166,5 @@ cython_debug/
 .claude
 REPRODUCTION_PLAN.md
 CLAUDE.md
+
+results*

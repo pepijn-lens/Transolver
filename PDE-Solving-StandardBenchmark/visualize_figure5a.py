@@ -1,21 +1,37 @@
 """Reproduce Figure 5(a): slice-weight visualization on Elasticity.
 
 Loads a trained Transolver_Irregular_Mesh checkpoint, captures slice weights
-from the last Physics-Attention layer (exposed as `last_slice_weights` on the
-attention module), and renders the per-slice weight maps on both the original
-mesh of a test sample and on a resampled (regular-grid) mesh covering the same
-domain.
+from the last Physics-Attention layer (exposed as ``last_slice_weights`` on
+the attention module), and renders the per-slice weight maps on both the
+original mesh and a resampled mesh (random subset of the original points,
+50-80%, matching the paper's appendix description).
+
+To make it easy to compare visual choices, this script sweeps over plotting
+styles (scatter at several marker sizes vs. tripcolor), vmax normalization
+(global vs. per-slice), and resample fractions, saving each variant to its
+own file in --out_dir.
 """
 
 import os
 import argparse
+from itertools import product
 
 import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
 import numpy as np
 import torch
-from scipy.spatial import Delaunay
 
 from model_dict import get_model
+
+
+# ---------------------------------------------------------------------------
+# Sweep configuration (edit here to add/remove variants).
+# ---------------------------------------------------------------------------
+RESAMPLE_FRACS = (0.5, 0.6, 0.7, 0.8)
+SCATTER_MARKER_SIZES = (1.5, 3, 6)
+VMAX_MODES = ('global', 'per_slice')
+CANONICAL_VARIANT = dict(frac=0.5, style='tripcolor',
+                         marker_size=0, vmax_mode='global')
 
 
 def parse_args():
@@ -25,19 +41,21 @@ def parse_args():
                    default='./checkpoints/elas_figure5a.pt')
     p.add_argument('--data_path', type=str,
                    default='/scratch/plens/FRML/data')
-    p.add_argument('--sample_idx', type=int, default=0,
-                   help='Test sample index used as the "original mesh".')
+    p.add_argument('--sample_indices', type=str, default='0',
+                   help='Comma-separated list of test sample indices to '
+                        'visualize. Each gets its own out_dir/sample_<idx>/ '
+                        'subfolder.')
     p.add_argument('--slice_num', type=int, default=64)
     p.add_argument('--n_hidden', type=int, default=128)
     p.add_argument('--n_layers', type=int, default=8)
     p.add_argument('--n_heads', type=int, default=8)
-    p.add_argument('--resample_grid', type=int, default=42,
-                   help='Side length of the regular grid for the resampled '
-                        'mesh; points outside the convex hull of the original '
-                        'sample are dropped.')
     p.add_argument('--out_dir', type=str, default='./results_figure5a')
     p.add_argument('--ncols', type=int, default=16,
                    help='Columns per mesh in the figure grid.')
+    p.add_argument('--cmap', type=str, default='viridis')
+    p.add_argument('--seed', type=int, default=0,
+                   help='RNG seed for the random subsampling of the '
+                        'resampled mesh.')
     return p.parse_args()
 
 
@@ -69,22 +87,17 @@ def load_test_xy(data_path):
     path_xy = os.path.join(data_path, 'elasticity', 'Meshes',
                            'Random_UnitCell_XY_10.npy')
     arr = np.load(path_xy)
-    arr = torch.tensor(arr, dtype=torch.float).permute(2, 0, 1)  # (N_total, N_pts, 2)
+    arr = torch.tensor(arr, dtype=torch.float).permute(2, 0, 1)
     return arr[-200:]  # exp_elas.py test split
 
 
-def build_resampled_mesh(orig_xy, grid_side):
-    xmin, ymin = orig_xy.min(0)
-    xmax, ymax = orig_xy.max(0)
-    gx = np.linspace(xmin, xmax, grid_side)
-    gy = np.linspace(ymin, ymax, grid_side)
-    GX, GY = np.meshgrid(gx, gy, indexing='xy')
-    grid = np.stack([GX.ravel(), GY.ravel()], axis=-1).astype(np.float32)
-    # Keep only points inside the convex hull of the original mesh so the
-    # resampled domain matches the unit-cell shape (with the hole).
-    tri = Delaunay(orig_xy)
-    inside = tri.find_simplex(grid) >= 0
-    return grid[inside]
+def random_subsample(xy, frac, rng):
+    """Keep `frac` of the rows (paper's resampling protocol: 50-80%)."""
+    n = xy.shape[0]
+    keep = max(1, int(round(frac * n)))
+    idx = rng.choice(n, size=keep, replace=False)
+    idx.sort()
+    return xy[idx]
 
 
 def run_and_capture(model, pts):
@@ -94,7 +107,39 @@ def run_and_capture(model, pts):
     return sw[0].mean(dim=0).cpu().numpy()  # [N, M]
 
 
-def plot_figure(orig_xy, orig_w, res_xy, res_w, ncols, out_dir):
+def _build_masked_triangulation(xy):
+    """Delaunay triangulation, with long triangles (those bridging the
+    central hole or hanging off the convex hull) masked out."""
+    tri = mtri.Triangulation(xy[:, 0], xy[:, 1])
+    pts = xy[tri.triangles]                    # (T, 3, 2)
+    edges = np.diff(np.concatenate([pts, pts[:, :1]], axis=1), axis=1)
+    edge_lens = np.linalg.norm(edges, axis=-1)  # (T, 3)
+    max_edge = edge_lens.max(axis=1)
+    threshold = 3.0 * np.median(max_edge)
+    tri.set_mask(max_edge > threshold)
+    return tri
+
+
+def _draw_panel(ax, xy, w, *, style, marker_size, cmap, vmin, vmax, tri=None):
+    if style == 'scatter':
+        ax.scatter(xy[:, 0], xy[:, 1], c=w, s=marker_size, cmap=cmap,
+                   vmin=vmin, vmax=vmax, marker='s', linewidths=0)
+    elif style == 'tripcolor':
+        if tri is None:
+            tri = _build_masked_triangulation(xy)
+        ax.tripcolor(tri, w, cmap=cmap, vmin=vmin, vmax=vmax,
+                     shading='gouraud')
+    else:
+        raise ValueError(style)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_aspect('equal')
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+
+
+def plot_figure(orig_xy, orig_w, res_xy, res_w, *, out_path,
+                ncols, style, marker_size, vmax_mode, cmap):
     n_slices = orig_w.shape[1]
     nrows_per_mesh = int(np.ceil(n_slices / ncols))
     total_rows = 2 * nrows_per_mesh
@@ -103,53 +148,113 @@ def plot_figure(orig_xy, orig_w, res_xy, res_w, ncols, out_dir):
                              figsize=(ncols * 0.9, total_rows * 0.9),
                              squeeze=False)
 
-    # Per-slice vmin/vmax so weak slices remain visible.
-    orig_vmax = orig_w.max(axis=0)
-    res_vmax = res_w.max(axis=0)
+    if vmax_mode == 'global':
+        gmin = float(min(orig_w.min(), res_w.min()))
+        gmax = float(max(orig_w.max(), res_w.max()))
+    elif vmax_mode == 'per_slice':
+        gmin = None
+        gmax = None
+    else:
+        raise ValueError(vmax_mode)
+
+    orig_tri = _build_masked_triangulation(orig_xy) if style == 'tripcolor' else None
+    res_tri = _build_masked_triangulation(res_xy) if style == 'tripcolor' else None
 
     for s in range(n_slices):
         r = s // ncols
         c = s % ncols
 
-        ax = axes[r, c]
-        ax.scatter(orig_xy[:, 0], orig_xy[:, 1],
-                   c=orig_w[:, s], s=1.5, cmap='coolwarm',
-                   vmin=0.0, vmax=max(orig_vmax[s], 1e-6))
-        ax.set_xticks([]); ax.set_yticks([])
-        ax.set_aspect('equal')
-        for sp in ax.spines.values():
-            sp.set_visible(False)
+        if vmax_mode == 'per_slice':
+            vmin_o = float(orig_w[:, s].min())
+            vmax_o = float(orig_w[:, s].max())
+            vmin_r = float(res_w[:, s].min())
+            vmax_r = float(res_w[:, s].max())
+        else:
+            vmin_o = vmin_r = gmin
+            vmax_o = vmax_r = gmax
 
-        ax = axes[nrows_per_mesh + r, c]
-        ax.scatter(res_xy[:, 0], res_xy[:, 1],
-                   c=res_w[:, s], s=1.5, cmap='coolwarm',
-                   vmin=0.0, vmax=max(res_vmax[s], 1e-6))
-        ax.set_xticks([]); ax.set_yticks([])
-        ax.set_aspect('equal')
-        for sp in ax.spines.values():
-            sp.set_visible(False)
+        _draw_panel(axes[r, c], orig_xy, orig_w[:, s],
+                    style=style, marker_size=marker_size,
+                    cmap=cmap, vmin=vmin_o, vmax=vmax_o, tri=orig_tri)
+        _draw_panel(axes[nrows_per_mesh + r, c], res_xy, res_w[:, s],
+                    style=style, marker_size=marker_size,
+                    cmap=cmap, vmin=vmin_r, vmax=vmax_r, tri=res_tri)
 
-    # Hide any leftover empty cells.
     for s in range(n_slices, nrows_per_mesh * ncols):
         r = s // ncols
         c = s % ncols
         axes[r, c].axis('off')
         axes[nrows_per_mesh + r, c].axis('off')
 
-    fig.text(0.005, 0.75, 'Original\nMesh', ha='left', va='center',
-             fontsize=10, rotation=0)
-    fig.text(0.005, 0.25, 'Resampled\nMesh', ha='left', va='center',
-             fontsize=10, rotation=0)
-    fig.suptitle('(a) Learned Slice Visualization', y=0.02, fontsize=11)
+    fig.text(0.012, 0.75, 'Original Mesh', ha='center', va='center',
+             rotation=90, fontsize=11)
+    fig.text(0.012, 0.27, 'Resampled Mesh', ha='center', va='center',
+             rotation=90, fontsize=11)
+    fig.suptitle('(a) Learned Slice Visualization', y=0.02, fontsize=12)
 
-    plt.subplots_adjust(left=0.05, right=0.995, top=0.97, bottom=0.04,
-                        wspace=0.05, hspace=0.05)
-    png_path = os.path.join(out_dir, 'figure5a.png')
-    pdf_path = os.path.join(out_dir, 'figure5a.pdf')
-    fig.savefig(png_path, dpi=200, bbox_inches='tight')
-    fig.savefig(pdf_path, bbox_inches='tight')
+    plt.subplots_adjust(left=0.035, right=0.995, top=0.97, bottom=0.04,
+                        wspace=0.03, hspace=0.03)
+    fig.savefig(out_path, dpi=180, bbox_inches='tight')
     plt.close(fig)
-    return png_path, pdf_path
+
+
+def variant_tag(frac, style, marker_size, vmax_mode):
+    if style == 'scatter':
+        return f'frac{frac:g}_scatter_s{marker_size:g}_{vmax_mode}'
+    return f'frac{frac:g}_{style}_{vmax_mode}'
+
+
+def render_sample(model, test_xy, sample_idx, args, sample_out_dir):
+    os.makedirs(sample_out_dir, exist_ok=True)
+    rng = np.random.default_rng(args.seed + sample_idx)
+
+    orig_pts = test_xy[sample_idx:sample_idx + 1].cuda()
+    orig_xy = orig_pts[0].cpu().numpy()
+    orig_w = run_and_capture(model, orig_pts)
+    np.save(os.path.join(sample_out_dir, 'mesh_original.npy'), orig_xy)
+    np.save(os.path.join(sample_out_dir, 'slice_weights_original.npy'), orig_w)
+
+    print(f'[sample {sample_idx}] {orig_xy.shape[0]} points')
+
+    n_saved = 0
+    for frac in RESAMPLE_FRACS:
+        res_xy = random_subsample(orig_xy, frac, rng)
+        res_pts = torch.tensor(res_xy, dtype=torch.float).unsqueeze(0).cuda()
+        res_w = run_and_capture(model, res_pts)
+        np.save(os.path.join(sample_out_dir,
+                             f'mesh_resampled_frac{frac:g}.npy'), res_xy)
+        np.save(os.path.join(sample_out_dir,
+                             f'slice_weights_resampled_frac{frac:g}.npy'),
+                res_w)
+        print(f'  frac={frac:g}: kept {res_xy.shape[0]} / {orig_xy.shape[0]}')
+
+        styles = (
+            [('scatter', m) for m in SCATTER_MARKER_SIZES]
+            + [('tripcolor', 0)]
+        )
+        for (style, m), vmax_mode in product(styles, VMAX_MODES):
+            tag = variant_tag(frac, style, m, vmax_mode)
+            out_path = os.path.join(sample_out_dir, f'figure5a__{tag}.png')
+            plot_figure(orig_xy, orig_w, res_xy, res_w,
+                        out_path=out_path,
+                        ncols=args.ncols, style=style, marker_size=m,
+                        vmax_mode=vmax_mode, cmap=args.cmap)
+            n_saved += 1
+
+    # Canonical figure for this sample.
+    c = CANONICAL_VARIANT
+    res_xy = random_subsample(orig_xy, c['frac'],
+                              np.random.default_rng(args.seed + sample_idx))
+    res_pts = torch.tensor(res_xy, dtype=torch.float).unsqueeze(0).cuda()
+    res_w = run_and_capture(model, res_pts)
+    for ext in ('png', 'pdf'):
+        out_path = os.path.join(sample_out_dir, f'figure5a.{ext}')
+        plot_figure(orig_xy, orig_w, res_xy, res_w, out_path=out_path,
+                    ncols=args.ncols, style=c['style'],
+                    marker_size=c['marker_size'],
+                    vmax_mode=c['vmax_mode'], cmap=args.cmap)
+    print(f'  saved {n_saved} variants + canonical to {sample_out_dir}/')
+    return n_saved
 
 
 def main():
@@ -157,30 +262,23 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     os.makedirs(args.out_dir, exist_ok=True)
 
+    sample_indices = [int(s) for s in args.sample_indices.split(',') if s.strip()]
+    if not sample_indices:
+        raise ValueError('--sample_indices must contain at least one index')
+
     model = build_model(args)
     test_xy = load_test_xy(args.data_path)
 
-    orig_pts = test_xy[args.sample_idx:args.sample_idx + 1].cuda()  # [1, N, 2]
-    orig_xy = orig_pts[0].cpu().numpy()
+    total = 0
+    for sidx in sample_indices:
+        if sidx < 0 or sidx >= test_xy.shape[0]:
+            raise IndexError(f'sample_idx {sidx} out of range '
+                             f'[0, {test_xy.shape[0]})')
+        sample_dir = os.path.join(args.out_dir, f'sample_{sidx:03d}')
+        total += render_sample(model, test_xy, sidx, args, sample_dir)
 
-    res_xy = build_resampled_mesh(orig_xy, args.resample_grid)
-    res_pts = torch.tensor(res_xy, dtype=torch.float).unsqueeze(0).cuda()
-
-    orig_w = run_and_capture(model, orig_pts)
-    res_w = run_and_capture(model, res_pts)
-
-    np.save(os.path.join(args.out_dir, 'slice_weights_original.npy'), orig_w)
-    np.save(os.path.join(args.out_dir, 'slice_weights_resampled.npy'), res_w)
-    np.save(os.path.join(args.out_dir, 'mesh_original.npy'), orig_xy)
-    np.save(os.path.join(args.out_dir, 'mesh_resampled.npy'), res_xy)
-
-    png_path, pdf_path = plot_figure(orig_xy, orig_w, res_xy, res_w,
-                                     args.ncols, args.out_dir)
-    print(f'Original mesh:   {orig_xy.shape[0]} points')
-    print(f'Resampled mesh:  {res_xy.shape[0]} points')
-    print(f'Slice weights:   {orig_w.shape} (per-mesh, averaged over heads)')
-    print(f'Saved figure to {png_path}')
-    print(f'Saved figure to {pdf_path}')
+    print(f'Done. {total} variant figures across {len(sample_indices)} '
+          f'samples (plus canonicals).')
 
 
 if __name__ == '__main__':
