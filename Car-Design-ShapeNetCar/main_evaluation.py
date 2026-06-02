@@ -76,9 +76,9 @@ with torch.no_grad():
         np.save('./results/' + args.cfd_model + '/' + str(index) + '_pred.npy', out_denorm.detach().cpu().numpy())
         np.save('./results/' + args.cfd_model + '/' + str(index) + '_gt.npy', y_denorm.detach().cpu().numpy())
 
-        pred_coef = cal_coefficient(vallst[index].split('/')[1], pred_press[:, None].detach().cpu().numpy(),
+        pred_coef = cal_coefficient(vallst[index], pred_press[:, None].detach().cpu().numpy(),
                                     pred_surf_velo.detach().cpu().numpy())
-        gt_coef = cal_coefficient(vallst[index].split('/')[1], gt_press[:, None].detach().cpu().numpy(),
+        gt_coef = cal_coefficient(vallst[index], gt_press[:, None].detach().cpu().numpy(),
                                   gt_surf_velo.detach().cpu().numpy())
 
         gt_coef_list.append(gt_coef)
