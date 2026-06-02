@@ -146,12 +146,19 @@ def get_normal(unstructured_grid_data):
 
 ############## calculate coefficient ##############
 def cal_coefficient(file_name, press_surf=None, velo_surf=None):
-    root = '/data/PDE_data/mlcfd_data/training_data'
-    save_path = '/data/PDE_data/mlcfd_data/preprocessed_data/param0/' + file_name
-    file_name_press = 'param0/' + file_name + '/quadpress_smpl.vtk'
-    file_name_velo = 'param0/' + file_name + '/hexvelo_smpl.vtk'
-    file_name_press = os.path.join(root, file_name_press)
-    file_name_velo = os.path.join(root, file_name_velo)
+    root = '/kaggle/input/datasets/thegreenier/transolver-data-group9/mlcfd_data/mlcfd_data/training_data'
+    
+    # file_name is now "paramX/car_id_string". We split it to get both parts dynamically!
+    param_folder, car_id = file_name.split('/')
+    
+    # Check if Kaggle did the double unzipping (e.g., param1/param1/)
+    if os.path.exists(os.path.join(root, param_folder, param_folder)):
+        file_name_press = os.path.join(root, param_folder, param_folder, car_id, 'quadpress_smpl.vtk')
+        file_name_velo = os.path.join(root, param_folder, param_folder, car_id, 'hexvelo_smpl.vtk')
+    else:
+        file_name_press = os.path.join(root, param_folder, car_id, 'quadpress_smpl.vtk')
+        file_name_velo = os.path.join(root, param_folder, car_id, 'hexvelo_smpl.vtk')
+        
     unstructured_grid_data_press = load_unstructured_grid_data(file_name_press)
     unstructured_grid_data_velo = load_unstructured_grid_data(file_name_velo)
 
