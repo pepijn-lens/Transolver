@@ -33,7 +33,7 @@ train_data, val_data, coef_norm, vallst = load_train_val_fold_file(args, preproc
 val_ds = GraphDataset(val_data, use_cfd_mesh=args.cfd_mesh, r=args.r)
 
 path = f'metrics/{args.cfd_model}/{args.fold_id}/{args.nb_epochs}_{args.weight}'
-model = torch.load(os.path.join(path, f'model_{args.nb_epochs}.pth')).to(device)
+model = torch.load(os.path.join(path, f'model_{args.nb_epochs}.pth'), weights_only=False).to(device)
 
 test_loader = DataLoader(val_ds, batch_size=1)
 
