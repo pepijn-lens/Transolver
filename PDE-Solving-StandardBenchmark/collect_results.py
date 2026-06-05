@@ -88,7 +88,7 @@ def main():
     )
     print(sep)
 
-    print('\nNote: L2 values are from 200-epoch runs (paper uses 500).')
+    print('\nNote: L2 values are from 300-epoch runs (paper uses 500).')
     print('Trends and rankings should match; absolute values may be ~5-10% higher.')
 
 
