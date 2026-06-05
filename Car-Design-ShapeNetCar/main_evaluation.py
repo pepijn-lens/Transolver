@@ -14,6 +14,7 @@ import scipy as sc
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='/data/PDE_data/mlcfd_data/training_data')
 parser.add_argument('--save_dir', default='/data/PDE_data/mlcfd_data/preprocessed_data')
+parser.add_argument('--raw_data_dir', default='/data/PDE_data/mlcfd_data/training_data', help='Path to raw .vtk files') # ADD THIS LINE
 parser.add_argument('--fold_id', default=0, type=int)
 parser.add_argument('--gpu', default=0, type=int)
 parser.add_argument('--cfd_model')
@@ -76,9 +77,9 @@ with torch.no_grad():
         np.save('./results/' + args.cfd_model + '/' + str(index) + '_pred.npy', out_denorm.detach().cpu().numpy())
         np.save('./results/' + args.cfd_model + '/' + str(index) + '_gt.npy', y_denorm.detach().cpu().numpy())
 
-        pred_coef = cal_coefficient(vallst[index], pred_press[:, None].detach().cpu().numpy(),
+        pred_coef = cal_coefficient(vallst[index], args.raw_data_dir, pred_press[:, None].detach().cpu().numpy(),
                                     pred_surf_velo.detach().cpu().numpy())
-        gt_coef = cal_coefficient(vallst[index], gt_press[:, None].detach().cpu().numpy(),
+        gt_coef = cal_coefficient(vallst[index], args.raw_data_dir, gt_press[:, None].detach().cpu().numpy(),
                                   gt_surf_velo.detach().cpu().numpy())
 
         gt_coef_list.append(gt_coef)

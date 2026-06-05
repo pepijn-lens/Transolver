@@ -30,6 +30,8 @@ parser.add_argument('--slice_num', type=int, default=32)
 parser.add_argument('--eval', type=int, default=0)
 parser.add_argument('--save_name', type=str, default='elas_Transolver')
 parser.add_argument('--data_path', type=str, default='/data/fno')
+parser.add_argument('--checkpoint_path', type=str, default='./checkpoints/elas_Transolver.pt', help='Path to the model weights')
+
 args = parser.parse_args()
 eval = args.eval
 save_name = args.save_name
@@ -104,7 +106,7 @@ def main():
     myloss = TestLoss(size_average=False)
 
     if eval:
-        model.load_state_dict(torch.load("./checkpoints/" + save_name + ".pt"))
+        model.load_state_dict(torch.load(args.checkpoint_path))
         model.eval()
         if not os.path.exists('./results/' + save_name + '/'):
             os.makedirs('./results/' + save_name + '/')

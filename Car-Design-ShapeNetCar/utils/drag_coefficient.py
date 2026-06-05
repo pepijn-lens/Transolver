@@ -145,19 +145,20 @@ def get_normal(unstructured_grid_data):
 
 
 ############## calculate coefficient ##############
-def cal_coefficient(file_name, press_surf=None, velo_surf=None):
-    root = '/kaggle/input/datasets/thegreenier/transolver-data-group9/mlcfd_data/mlcfd_data/training_data'
+def cal_coefficient(file_name, raw_data_dir, press_surf=None, velo_surf=None):
     
-    # file_name is now "paramX/car_id_string". We split it to get both parts dynamically!
+    # We no longer hardcode /kaggle/... here. We use the variable passed from the terminal!
+    root = raw_data_dir
     param_folder, car_id = file_name.split('/')
-    
-    # Check if Kaggle did the double unzipping (e.g., param1/param1/)
-    if os.path.exists(os.path.join(root, param_folder, param_folder)):
-        file_name_press = os.path.join(root, param_folder, param_folder, car_id, 'quadpress_smpl.vtk')
-        file_name_velo = os.path.join(root, param_folder, param_folder, car_id, 'hexvelo_smpl.vtk')
-    else:
-        file_name_press = os.path.join(root, param_folder, car_id, 'quadpress_smpl.vtk')
-        file_name_velo = os.path.join(root, param_folder, car_id, 'hexvelo_smpl.vtk')
+
+    # 1. Efficiently resolve the base directory just once
+    target_dir = os.path.join(root, param_folder, param_folder)
+    if not os.path.exists(target_dir):
+        target_dir = os.path.join(root, param_folder)
+
+    # 2. Build the final paths dynamically
+    file_name_press = os.path.join(target_dir, car_id, 'quadpress_smpl.vtk')
+    file_name_velo = os.path.join(target_dir, car_id, 'hexvelo_smpl.vtk')
         
     unstructured_grid_data_press = load_unstructured_grid_data(file_name_press)
     unstructured_grid_data_velo = load_unstructured_grid_data(file_name_velo)
