@@ -1,0 +1,14 @@
+python main.py \
+--gpu 0 \
+--save_dir ../data/aircraft_cache \
+--n_hidden 256 \
+--n_layers 8 \
+--n_heads 8 \
+--mlp_ratio 2 \
+--slice_num 32 \
+--lr 0.001 \
+--max_grad_norm 0.1 \
+--epochs 200 \
+--val_iter 10 \
+--eval 0 \
+--save_name aircraft_Transolver
