@@ -44,6 +44,13 @@ def evaluate(model, loader, device, denorm_std=None):
     return overall / n, per_field / n
 
 
+def save_checkpoint(path, epoch, model, optimizer, scheduler):
+    torch.save({'epoch': epoch,
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()}, path)
+
+
 def train_model(model, train_ds, val_ds, device, args, coef_norm, save_path):
     train_loader = DataLoader(train_ds, batch_size=1, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=1, shuffle=False)
@@ -54,10 +61,30 @@ def train_model(model, train_ds, val_ds, device, args, coef_norm, save_path):
     myloss = TestLoss(size_average=True)
     denorm_std = coef_norm['values_std'] if coef_norm is not None else None
 
+    # Resume from an existing checkpoint so a re-submitted (or requeued) job
+    # continues from the last completed epoch with its optimizer/scheduler state.
+    start_epoch = 0
+    if args.resume and os.path.isfile(save_path):
+        ckpt = torch.load(save_path, map_location=device)
+        if isinstance(ckpt, dict) and 'model' in ckpt:
+            model.load_state_dict(ckpt['model'])
+            optimizer.load_state_dict(ckpt['optimizer'])
+            scheduler.load_state_dict(ckpt['scheduler'])
+            start_epoch = ckpt['epoch'] + 1
+            print(f'Resuming from {save_path} at epoch {start_epoch}', flush=True)
+        else:
+            print(f'Found legacy weights-only checkpoint at {save_path}; '
+                  f'loading weights but restarting optimizer/scheduler', flush=True)
+            model.load_state_dict(ckpt)
+
+    if start_epoch >= args.epochs:
+        print(f'Checkpoint already at epoch {start_epoch} >= {args.epochs}; nothing to do.', flush=True)
+        return model
+
     print(f'Training: {len(train_ds)} train / {len(val_ds)} val cases, '
-          f'{args.epochs} epochs', flush=True)
+          f'epochs {start_epoch}..{args.epochs - 1}', flush=True)
     start = time.time()
-    for ep in range(args.epochs):
+    for ep in range(start_epoch, args.epochs):
         model.train()
         train_loss = 0.0
         for batch in train_loader:
@@ -81,9 +108,8 @@ def train_model(model, train_ds, val_ds, device, args, coef_norm, save_path):
         else:
             print(f'Epoch {ep:4d}  train_relL2 {train_loss:.5f}', flush=True)
 
-        if ep % 50 == 0:
-            torch.save(model.state_dict(), save_path)
+        # Checkpoint every epoch so an interrupted job loses at most one epoch.
+        save_checkpoint(save_path, ep, model, optimizer, scheduler)
 
-    torch.save(model.state_dict(), save_path)
     print(f'Done in {time.time() - start:.1f}s. Saved -> {save_path}', flush=True)
     return model

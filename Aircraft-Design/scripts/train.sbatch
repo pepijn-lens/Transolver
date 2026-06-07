@@ -14,6 +14,10 @@
 # Train Transolver on the aircraft surface dataset.
 # On first run this also builds the .npz cache from the raw Tecplot meshes
 # (CPU, ~5 min, idempotent: cached cases are skipped on subsequent runs).
+#
+# Resumable: a checkpoint (model + optimizer + scheduler + epoch) is written
+# every epoch. If this job times out or is killed, just re-submit the same
+# sbatch -- main.py auto-resumes from ./checkpoints/<save_name>.pt (--resume 1).
 
 set -euo pipefail
 

@@ -26,6 +26,8 @@ def get_args():
     p.add_argument('--slice_num', type=int, default=32)
     p.add_argument('--dropout', type=float, default=0.0)
     p.add_argument('--eval', type=int, default=0)
+    p.add_argument('--resume', type=int, default=1,
+                   help='resume from ./checkpoints/<save_name>.pt if it exists')
     p.add_argument('--save_name', type=str, default='aircraft_Transolver')
     return p.parse_args()
 
@@ -60,7 +62,8 @@ def main():
     save_path = os.path.join('./checkpoints', args.save_name + '.pt')
 
     if args.eval:
-        model.load_state_dict(torch.load(save_path, map_location=device))
+        ckpt = torch.load(save_path, map_location=device)
+        model.load_state_dict(ckpt['model'] if isinstance(ckpt, dict) and 'model' in ckpt else ckpt)
         from torch.utils.data import DataLoader
         val_loader = DataLoader(val_ds, batch_size=1, shuffle=False)
         val_err, per_field = evaluate(model, val_loader, device, coef_norm['values_std'])
