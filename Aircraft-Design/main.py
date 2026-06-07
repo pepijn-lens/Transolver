@@ -10,7 +10,7 @@ from models.Transolver import Model
 
 def get_args():
     p = argparse.ArgumentParser('Train Transolver on the aircraft surface task')
-    p.add_argument('--save_dir', type=str, default='../data/aircraft_cache',
+    p.add_argument('--save_dir', type=str, default='../../data/aircraft_cache',
                    help='dir with the .npz cache + airplane_dataset.json (from preprocess.py)')
     p.add_argument('--gpu', type=int, default=0)
     p.add_argument('--lr', type=float, default=1e-3)

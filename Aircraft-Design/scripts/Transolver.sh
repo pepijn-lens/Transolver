@@ -1,6 +1,6 @@
 python main.py \
 --gpu 0 \
---save_dir ../data/aircraft_cache \
+--save_dir ../../data/aircraft_cache \
 --n_hidden 256 \
 --n_layers 8 \
 --n_heads 8 \

@@ -69,8 +69,8 @@ def cond_from_name(name):
 
 def main():
     p = argparse.ArgumentParser('Preprocess aircraft .dat -> .npz cache')
-    p.add_argument('--data_dir', type=str, default='../data/aircraft')
-    p.add_argument('--save_dir', type=str, default='../data/aircraft_cache')
+    p.add_argument('--data_dir', type=str, default='../../data/aircraft')
+    p.add_argument('--save_dir', type=str, default='../../data/aircraft_cache')
     p.add_argument('--n_test_geom', type=int, default=6,
                    help='# of geometries held out for the test split')
     p.add_argument('--seed', type=int, default=0)
