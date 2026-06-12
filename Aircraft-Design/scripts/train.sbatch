@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=transolver_aircraft
-#SBATCH --partition=gpu-a100-small
+#SBATCH --partition=gpu-a100
 #SBATCH --account=education-eemcs-courses-dsait4095
 #SBATCH --time=12:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus-per-task=1
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=7G
 #SBATCH --chdir=/scratch/plens/FRML/Transolver/Aircraft-Design
 #SBATCH --output=logs/slurm-%j.out
 #SBATCH --error=logs/slurm-%j.err
