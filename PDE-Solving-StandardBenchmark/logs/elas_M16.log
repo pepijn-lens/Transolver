@@ -1,0 +1,674 @@
+torch.Size([2000, 972]) torch.Size([2000, 972, 2])
+Dataloading is over.
+Namespace(lr=0.001, epochs=300, weight_decay=1e-05, model='Transolver_Irregular_Mesh', n_hidden=128, n_layers=8, n_heads=8, batch_size=1, gpu='0', max_grad_norm=0.1, downsample=5, mlp_ratio=1, dropout=0.0, ntrain=1000, unified_pos=0, ref=8, slice_num=16, eval=0, save_name='elas_M16', data_path='/kaggle/input/datasets/thegreenier/transolver-data-group9/elasticity-20260508T172658Z-3-001')
+Model(
+  (preprocess): MLP(
+    (linear_pre): Sequential(
+      (0): Linear(in_features=2, out_features=256, bias=True)
+      (1): GELU(approximate='none')
+    )
+    (linear_post): Linear(in_features=256, out_features=128, bias=True)
+    (linears): ModuleList()
+  )
+  (blocks): ModuleList(
+    (0-6): 7 x Transolver_block(
+      (ln_1): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (Attn): Physics_Attention_Irregular_Mesh(
+        (softmax): Softmax(dim=-1)
+        (dropout): Dropout(p=0.0, inplace=False)
+        (in_project_x): Linear(in_features=128, out_features=128, bias=True)
+        (in_project_fx): Linear(in_features=128, out_features=128, bias=True)
+        (in_project_slice): Linear(in_features=16, out_features=16, bias=True)
+        (to_q): Linear(in_features=16, out_features=16, bias=False)
+        (to_k): Linear(in_features=16, out_features=16, bias=False)
+        (to_v): Linear(in_features=16, out_features=16, bias=False)
+        (to_out): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (ln_2): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp): MLP(
+        (linear_pre): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): GELU(approximate='none')
+        )
+        (linear_post): Linear(in_features=128, out_features=128, bias=True)
+        (linears): ModuleList()
+      )
+    )
+    (7): Transolver_block(
+      (ln_1): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (Attn): Physics_Attention_Irregular_Mesh(
+        (softmax): Softmax(dim=-1)
+        (dropout): Dropout(p=0.0, inplace=False)
+        (in_project_x): Linear(in_features=128, out_features=128, bias=True)
+        (in_project_fx): Linear(in_features=128, out_features=128, bias=True)
+        (in_project_slice): Linear(in_features=16, out_features=16, bias=True)
+        (to_q): Linear(in_features=16, out_features=16, bias=False)
+        (to_k): Linear(in_features=16, out_features=16, bias=False)
+        (to_v): Linear(in_features=16, out_features=16, bias=False)
+        (to_out): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (ln_2): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp): MLP(
+        (linear_pre): Sequential(
+          (0): Linear(in_features=128, out_features=128, bias=True)
+          (1): GELU(approximate='none')
+        )
+        (linear_post): Linear(in_features=128, out_features=128, bias=True)
+        (linears): ModuleList()
+      )
+      (ln_3): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (mlp2): Linear(in_features=128, out_features=1, bias=True)
+    )
+  )
+)
+Total Trainable Params: 707137
+Epoch 0 Train loss : 0.50878
+rel_err : 0.4926621660590172
+save model
+Epoch 1 Train loss : 0.49278
+rel_err : 0.42980434119701383
+Epoch 2 Train loss : 0.38094
+rel_err : 0.34561965830624103
+Epoch 3 Train loss : 0.34299
+rel_err : 0.3196678742021322
+Epoch 4 Train loss : 0.32875
+rel_err : 0.31187205970287324
+Epoch 5 Train loss : 0.31451
+rel_err : 0.29235628589987755
+Epoch 6 Train loss : 0.30199
+rel_err : 0.2894106878340244
+Epoch 7 Train loss : 0.29729
+rel_err : 0.29791864573955534
+Epoch 8 Train loss : 0.28713
+rel_err : 0.2990492379665375
+Epoch 9 Train loss : 0.28691
+rel_err : 0.27862958967685697
+Epoch 10 Train loss : 0.28159
+rel_err : 0.2742305428534746
+Epoch 11 Train loss : 0.27753
+rel_err : 0.27997119836509227
+Epoch 12 Train loss : 0.27216
+rel_err : 0.2758288189023733
+Epoch 13 Train loss : 0.27127
+rel_err : 0.2777341767400503
+Epoch 14 Train loss : 0.26502
+rel_err : 0.255530841127038
+Epoch 15 Train loss : 0.26564
+rel_err : 0.2536506573110819
+Epoch 16 Train loss : 0.26169
+rel_err : 0.2372830117493868
+Epoch 17 Train loss : 0.20508
+rel_err : 0.16398473754525184
+Epoch 18 Train loss : 0.14973
+rel_err : 0.12847248502075673
+Epoch 19 Train loss : 0.12383
+rel_err : 0.1219345298781991
+Epoch 20 Train loss : 0.10994
+rel_err : 0.10141268201172352
+Epoch 21 Train loss : 0.09979
+rel_err : 0.09105989845469593
+Epoch 22 Train loss : 0.09272
+rel_err : 0.08606075597926974
+Epoch 23 Train loss : 0.08847
+rel_err : 0.08253961078822612
+Epoch 24 Train loss : 0.08342
+rel_err : 0.0793899223022163
+Epoch 25 Train loss : 0.07996
+rel_err : 0.07774047238752246
+Epoch 26 Train loss : 0.07690
+rel_err : 0.06972421599552035
+Epoch 27 Train loss : 0.07283
+rel_err : 0.07742779148742557
+Epoch 28 Train loss : 0.07117
+rel_err : 0.06689273273572326
+Epoch 29 Train loss : 0.06743
+rel_err : 0.06519051028415561
+Epoch 30 Train loss : 0.06682
+rel_err : 0.06423949124291539
+Epoch 31 Train loss : 0.06359
+rel_err : 0.0596486784145236
+Epoch 32 Train loss : 0.06313
+rel_err : 0.059110495671629903
+Epoch 33 Train loss : 0.06207
+rel_err : 0.060977154988795516
+Epoch 34 Train loss : 0.05971
+rel_err : 0.05518645387142897
+Epoch 35 Train loss : 0.05815
+rel_err : 0.05523419639095664
+Epoch 36 Train loss : 0.05681
+rel_err : 0.06853109741583467
+Epoch 37 Train loss : 0.05569
+rel_err : 0.05823658283799887
+Epoch 38 Train loss : 0.05492
+rel_err : 0.05639042614027858
+Epoch 39 Train loss : 0.05355
+rel_err : 0.05749133292585611
+Epoch 40 Train loss : 0.05274
+rel_err : 0.0493334991298616
+Epoch 41 Train loss : 0.05128
+rel_err : 0.049403306394815445
+Epoch 42 Train loss : 0.05213
+rel_err : 0.0476986550167203
+Epoch 43 Train loss : 0.04966
+rel_err : 0.0467601534165442
+Epoch 44 Train loss : 0.04969
+rel_err : 0.04587316745892167
+Epoch 45 Train loss : 0.04783
+rel_err : 0.045718956459313634
+Epoch 46 Train loss : 0.04816
+rel_err : 0.04467627828009427
+Epoch 47 Train loss : 0.04752
+rel_err : 0.04482527855783701
+Epoch 48 Train loss : 0.04702
+rel_err : 0.05283647947944701
+Epoch 49 Train loss : 0.04721
+rel_err : 0.046545522613450886
+Epoch 50 Train loss : 0.04510
+rel_err : 0.04968252409249544
+Epoch 51 Train loss : 0.04479
+rel_err : 0.05317800482735038
+Epoch 52 Train loss : 0.04493
+rel_err : 0.04299630568362772
+Epoch 53 Train loss : 0.04508
+rel_err : 0.045652800975367426
+Epoch 54 Train loss : 0.04395
+rel_err : 0.04590444790199399
+Epoch 55 Train loss : 0.04334
+rel_err : 0.0437193043064326
+Epoch 56 Train loss : 0.04245
+rel_err : 0.0432012648973614
+Epoch 57 Train loss : 0.04148
+rel_err : 0.03921014340594411
+Epoch 58 Train loss : 0.04194
+rel_err : 0.04381101856939495
+Epoch 59 Train loss : 0.04078
+rel_err : 0.04641991153359413
+Epoch 60 Train loss : 0.04111
+rel_err : 0.04275566149502993
+Epoch 61 Train loss : 0.04036
+rel_err : 0.04189060781151056
+Epoch 62 Train loss : 0.04011
+rel_err : 0.03943987777456641
+Epoch 63 Train loss : 0.03931
+rel_err : 0.039831686271354555
+Epoch 64 Train loss : 0.03929
+rel_err : 0.0391119902022183
+Epoch 65 Train loss : 0.03866
+rel_err : 0.03677474447526038
+Epoch 66 Train loss : 0.03855
+rel_err : 0.03625495592132211
+Epoch 67 Train loss : 0.03862
+rel_err : 0.040616327915340665
+Epoch 68 Train loss : 0.03773
+rel_err : 0.03576325012370944
+Epoch 69 Train loss : 0.03672
+rel_err : 0.0357631950173527
+Epoch 70 Train loss : 0.03690
+rel_err : 0.04135054549202323
+Epoch 71 Train loss : 0.03667
+rel_err : 0.03426459361799061
+Epoch 72 Train loss : 0.03651
+rel_err : 0.03976829124614596
+Epoch 73 Train loss : 0.03659
+rel_err : 0.0369399029109627
+Epoch 74 Train loss : 0.03551
+rel_err : 0.03820450988598168
+Epoch 75 Train loss : 0.03563
+rel_err : 0.03574966344982386
+Epoch 76 Train loss : 0.03547
+rel_err : 0.036713835187256336
+Epoch 77 Train loss : 0.03478
+rel_err : 0.03712913033552468
+Epoch 78 Train loss : 0.03441
+rel_err : 0.03630264087580144
+Epoch 79 Train loss : 0.03440
+rel_err : 0.03530932587571442
+Epoch 80 Train loss : 0.03387
+rel_err : 0.03624555815942585
+Epoch 81 Train loss : 0.03348
+rel_err : 0.03318383448757231
+Epoch 82 Train loss : 0.03365
+rel_err : 0.03203710988163948
+Epoch 83 Train loss : 0.03335
+rel_err : 0.034677401185035706
+Epoch 84 Train loss : 0.03298
+rel_err : 0.03257183946669102
+Epoch 85 Train loss : 0.03262
+rel_err : 0.031959598707035186
+Epoch 86 Train loss : 0.03277
+rel_err : 0.03220073220320046
+Epoch 87 Train loss : 0.03227
+rel_err : 0.03438187795691192
+Epoch 88 Train loss : 0.03182
+rel_err : 0.03556926125660539
+Epoch 89 Train loss : 0.03206
+rel_err : 0.032795561766251924
+Epoch 90 Train loss : 0.03150
+rel_err : 0.03153132524341345
+Epoch 91 Train loss : 0.03112
+rel_err : 0.03145663972012699
+Epoch 92 Train loss : 0.03115
+rel_err : 0.029267340246587992
+Epoch 93 Train loss : 0.03079
+rel_err : 0.030046765133738516
+Epoch 94 Train loss : 0.03086
+rel_err : 0.031784831611439586
+Epoch 95 Train loss : 0.03043
+rel_err : 0.030665843458846213
+Epoch 96 Train loss : 0.03029
+rel_err : 0.02977872128598392
+Epoch 97 Train loss : 0.03001
+rel_err : 0.030446087392047048
+Epoch 98 Train loss : 0.03024
+rel_err : 0.029858102230355142
+Epoch 99 Train loss : 0.03015
+rel_err : 0.03282748464494944
+Epoch 100 Train loss : 0.02956
+rel_err : 0.029023258248344064
+save model
+Epoch 101 Train loss : 0.02961
+rel_err : 0.031693479670211674
+Epoch 102 Train loss : 0.02916
+rel_err : 0.02974487385712564
+Epoch 103 Train loss : 0.02928
+rel_err : 0.02943701496347785
+Epoch 104 Train loss : 0.02914
+rel_err : 0.02861487593501806
+Epoch 105 Train loss : 0.02888
+rel_err : 0.032036748994141814
+Epoch 106 Train loss : 0.02853
+rel_err : 0.02916895065456629
+Epoch 107 Train loss : 0.02828
+rel_err : 0.028642660919576884
+Epoch 108 Train loss : 0.02763
+rel_err : 0.02684578375890851
+Epoch 109 Train loss : 0.02782
+rel_err : 0.02931378558278084
+Epoch 110 Train loss : 0.02764
+rel_err : 0.02722001708112657
+Epoch 111 Train loss : 0.02760
+rel_err : 0.028710158336907626
+Epoch 112 Train loss : 0.02728
+rel_err : 0.02992049854248762
+Epoch 113 Train loss : 0.02682
+rel_err : 0.02944274718873203
+Epoch 114 Train loss : 0.02676
+rel_err : 0.029789167973212898
+Epoch 115 Train loss : 0.02680
+rel_err : 0.027694275034591556
+Epoch 116 Train loss : 0.02670
+rel_err : 0.02736775331199169
+Epoch 117 Train loss : 0.02591
+rel_err : 0.027398819709196685
+Epoch 118 Train loss : 0.02603
+rel_err : 0.025313812303356827
+Epoch 119 Train loss : 0.02614
+rel_err : 0.02579738022759557
+Epoch 120 Train loss : 0.02635
+rel_err : 0.025696574053727092
+Epoch 121 Train loss : 0.02526
+rel_err : 0.028257911372929812
+Epoch 122 Train loss : 0.02565
+rel_err : 0.025218119192868472
+Epoch 123 Train loss : 0.02528
+rel_err : 0.03126176374033093
+Epoch 124 Train loss : 0.02516
+rel_err : 0.02728220258373767
+Epoch 125 Train loss : 0.02505
+rel_err : 0.025129590206779538
+Epoch 126 Train loss : 0.02448
+rel_err : 0.02474354163277894
+Epoch 127 Train loss : 0.02445
+rel_err : 0.028532980103045703
+Epoch 128 Train loss : 0.02461
+rel_err : 0.024008085462264718
+Epoch 129 Train loss : 0.02467
+rel_err : 0.024343529301695525
+Epoch 130 Train loss : 0.02366
+rel_err : 0.024317630054429173
+Epoch 131 Train loss : 0.02393
+rel_err : 0.02516513504553586
+Epoch 132 Train loss : 0.02393
+rel_err : 0.025487831197679042
+Epoch 133 Train loss : 0.02399
+rel_err : 0.02348591002635658
+Epoch 134 Train loss : 0.02333
+rel_err : 0.024410604322329162
+Epoch 135 Train loss : 0.02328
+rel_err : 0.02361423906404525
+Epoch 136 Train loss : 0.02328
+rel_err : 0.025252902507781984
+Epoch 137 Train loss : 0.02277
+rel_err : 0.025557969873771073
+Epoch 138 Train loss : 0.02286
+rel_err : 0.025560744600370527
+Epoch 139 Train loss : 0.02283
+rel_err : 0.025971340108662845
+Epoch 140 Train loss : 0.02245
+rel_err : 0.022239521625451744
+Epoch 141 Train loss : 0.02237
+rel_err : 0.02245918004307896
+Epoch 142 Train loss : 0.02227
+rel_err : 0.025809941915795206
+Epoch 143 Train loss : 0.02212
+rel_err : 0.02378949976991862
+Epoch 144 Train loss : 0.02200
+rel_err : 0.022755941287614406
+Epoch 145 Train loss : 0.02152
+rel_err : 0.024380843322724104
+Epoch 146 Train loss : 0.02174
+rel_err : 0.02252156558446586
+Epoch 147 Train loss : 0.02172
+rel_err : 0.021915793623775243
+Epoch 148 Train loss : 0.02139
+rel_err : 0.021983266337774695
+Epoch 149 Train loss : 0.02131
+rel_err : 0.021788374842144548
+Epoch 150 Train loss : 0.02104
+rel_err : 0.022948879785835742
+Epoch 151 Train loss : 0.02090
+rel_err : 0.020828144811093807
+Epoch 152 Train loss : 0.02070
+rel_err : 0.02238856446929276
+Epoch 153 Train loss : 0.02095
+rel_err : 0.020358005352318288
+Epoch 154 Train loss : 0.02041
+rel_err : 0.02214344915933907
+Epoch 155 Train loss : 0.02036
+rel_err : 0.020594951082020998
+Epoch 156 Train loss : 0.02023
+rel_err : 0.020549162924289703
+Epoch 157 Train loss : 0.02007
+rel_err : 0.021191695374436676
+Epoch 158 Train loss : 0.02018
+rel_err : 0.023174816709943116
+Epoch 159 Train loss : 0.02023
+rel_err : 0.02191514044534415
+Epoch 160 Train loss : 0.01974
+rel_err : 0.020522979199886323
+Epoch 161 Train loss : 0.01989
+rel_err : 0.02150122231338173
+Epoch 162 Train loss : 0.01978
+rel_err : 0.019931208691559732
+Epoch 163 Train loss : 0.01960
+rel_err : 0.020014896038919688
+Epoch 164 Train loss : 0.01919
+rel_err : 0.019929348886944354
+Epoch 165 Train loss : 0.01901
+rel_err : 0.019717517397366463
+Epoch 166 Train loss : 0.01904
+rel_err : 0.0196389402449131
+Epoch 167 Train loss : 0.01884
+rel_err : 0.018991761514917015
+Epoch 168 Train loss : 0.01875
+rel_err : 0.020151959792710842
+Epoch 169 Train loss : 0.01872
+rel_err : 0.01962579089216888
+Epoch 170 Train loss : 0.01858
+rel_err : 0.019415479619055986
+Epoch 171 Train loss : 0.01830
+rel_err : 0.019604701469652354
+Epoch 172 Train loss : 0.01813
+rel_err : 0.019218576778657733
+Epoch 173 Train loss : 0.01811
+rel_err : 0.018637707582674922
+Epoch 174 Train loss : 0.01793
+rel_err : 0.018536496455781162
+Epoch 175 Train loss : 0.01800
+rel_err : 0.01850016084033996
+Epoch 176 Train loss : 0.01784
+rel_err : 0.01809179551899433
+Epoch 177 Train loss : 0.01786
+rel_err : 0.020094212065450846
+Epoch 178 Train loss : 0.01745
+rel_err : 0.018490311610512435
+Epoch 179 Train loss : 0.01779
+rel_err : 0.018620951529592276
+Epoch 180 Train loss : 0.01721
+rel_err : 0.01831930692307651
+Epoch 181 Train loss : 0.01737
+rel_err : 0.0189464368019253
+Epoch 182 Train loss : 0.01718
+rel_err : 0.018733083517290652
+Epoch 183 Train loss : 0.01714
+rel_err : 0.01837627832777798
+Epoch 184 Train loss : 0.01673
+rel_err : 0.017717633401043712
+Epoch 185 Train loss : 0.01678
+rel_err : 0.018272594590671362
+Epoch 186 Train loss : 0.01654
+rel_err : 0.017999258977361023
+Epoch 187 Train loss : 0.01646
+rel_err : 0.01762093935161829
+Epoch 188 Train loss : 0.01646
+rel_err : 0.018948960490524767
+Epoch 189 Train loss : 0.01639
+rel_err : 0.017888800813816486
+Epoch 190 Train loss : 0.01625
+rel_err : 0.017267327047884463
+Epoch 191 Train loss : 0.01619
+rel_err : 0.017144501651637258
+Epoch 192 Train loss : 0.01607
+rel_err : 0.016819189339876174
+Epoch 193 Train loss : 0.01595
+rel_err : 0.016946453540585934
+Epoch 194 Train loss : 0.01604
+rel_err : 0.017086292495951057
+Epoch 195 Train loss : 0.01589
+rel_err : 0.017652309173718093
+Epoch 196 Train loss : 0.01571
+rel_err : 0.017020647283643484
+Epoch 197 Train loss : 0.01567
+rel_err : 0.018011875869706272
+Epoch 198 Train loss : 0.01550
+rel_err : 0.016547462115995587
+Epoch 199 Train loss : 0.01543
+rel_err : 0.01628676856867969
+Epoch 200 Train loss : 0.01529
+rel_err : 0.01680368328932673
+save model
+Epoch 201 Train loss : 0.01513
+rel_err : 0.016684434176422656
+Epoch 202 Train loss : 0.01517
+rel_err : 0.015798355690203606
+Epoch 203 Train loss : 0.01497
+rel_err : 0.01626246072817594
+Epoch 204 Train loss : 0.01497
+rel_err : 0.01596677666530013
+Epoch 205 Train loss : 0.01483
+rel_err : 0.01604118261486292
+Epoch 206 Train loss : 0.01477
+rel_err : 0.016830898793414234
+Epoch 207 Train loss : 0.01475
+rel_err : 0.01616132242139429
+Epoch 208 Train loss : 0.01458
+rel_err : 0.015529422936961055
+Epoch 209 Train loss : 0.01449
+rel_err : 0.016107115428894758
+Epoch 210 Train loss : 0.01440
+rel_err : 0.01611833037342876
+Epoch 211 Train loss : 0.01432
+rel_err : 0.015966617213562132
+Epoch 212 Train loss : 0.01427
+rel_err : 0.01582801156677306
+Epoch 213 Train loss : 0.01421
+rel_err : 0.015648141191340982
+Epoch 214 Train loss : 0.01406
+rel_err : 0.015375214689411222
+Epoch 215 Train loss : 0.01404
+rel_err : 0.01543233592994511
+Epoch 216 Train loss : 0.01396
+rel_err : 0.01518613017629832
+Epoch 217 Train loss : 0.01384
+rel_err : 0.015276545947417617
+Epoch 218 Train loss : 0.01380
+rel_err : 0.01527274361345917
+Epoch 219 Train loss : 0.01374
+rel_err : 0.015153827187605202
+Epoch 220 Train loss : 0.01361
+rel_err : 0.014950951528735459
+Epoch 221 Train loss : 0.01357
+rel_err : 0.014979085382074118
+Epoch 222 Train loss : 0.01360
+rel_err : 0.014903769074007868
+Epoch 223 Train loss : 0.01347
+rel_err : 0.014861952126957477
+Epoch 224 Train loss : 0.01342
+rel_err : 0.01485002225264907
+Epoch 225 Train loss : 0.01330
+rel_err : 0.014903309172950685
+Epoch 226 Train loss : 0.01328
+rel_err : 0.01509109381120652
+Epoch 227 Train loss : 0.01324
+rel_err : 0.014668574072420597
+Epoch 228 Train loss : 0.01315
+rel_err : 0.014800049215555191
+Epoch 229 Train loss : 0.01308
+rel_err : 0.014514049468562006
+Epoch 230 Train loss : 0.01305
+rel_err : 0.014658758449368179
+Epoch 231 Train loss : 0.01299
+rel_err : 0.014304083068855106
+Epoch 232 Train loss : 0.01290
+rel_err : 0.014310812344774604
+Epoch 233 Train loss : 0.01287
+rel_err : 0.014233491031918675
+Epoch 234 Train loss : 0.01280
+rel_err : 0.014357649486046285
+Epoch 235 Train loss : 0.01274
+rel_err : 0.014156671513337642
+Epoch 236 Train loss : 0.01269
+rel_err : 0.014033953822217882
+Epoch 237 Train loss : 0.01267
+rel_err : 0.014101196972187608
+Epoch 238 Train loss : 0.01258
+rel_err : 0.014046830420847983
+Epoch 239 Train loss : 0.01252
+rel_err : 0.014067488815635442
+Epoch 240 Train loss : 0.01251
+rel_err : 0.013955818612594158
+Epoch 241 Train loss : 0.01245
+rel_err : 0.013916441032197326
+Epoch 242 Train loss : 0.01239
+rel_err : 0.014148330981843173
+Epoch 243 Train loss : 0.01236
+rel_err : 0.01384909802582115
+Epoch 244 Train loss : 0.01230
+rel_err : 0.013959772111847997
+Epoch 245 Train loss : 0.01225
+rel_err : 0.013728650882840157
+Epoch 246 Train loss : 0.01222
+rel_err : 0.013674040441401303
+Epoch 247 Train loss : 0.01218
+rel_err : 0.013791648591868579
+Epoch 248 Train loss : 0.01213
+rel_err : 0.013696923104580492
+Epoch 249 Train loss : 0.01209
+rel_err : 0.01368030573707074
+Epoch 250 Train loss : 0.01206
+rel_err : 0.013685250466223806
+Epoch 251 Train loss : 0.01203
+rel_err : 0.013616617009975017
+Epoch 252 Train loss : 0.01197
+rel_err : 0.013540191494394093
+Epoch 253 Train loss : 0.01193
+rel_err : 0.013376110661774875
+Epoch 254 Train loss : 0.01191
+rel_err : 0.013518884151708335
+Epoch 255 Train loss : 0.01188
+rel_err : 0.013468072859104722
+Epoch 256 Train loss : 0.01185
+rel_err : 0.013442456384655087
+Epoch 257 Train loss : 0.01182
+rel_err : 0.013433017793577164
+Epoch 258 Train loss : 0.01179
+rel_err : 0.013378587213810533
+Epoch 259 Train loss : 0.01176
+rel_err : 0.013388675774913282
+Epoch 260 Train loss : 0.01173
+rel_err : 0.013361921445466577
+Epoch 261 Train loss : 0.01170
+rel_err : 0.013283223628532142
+Epoch 262 Train loss : 0.01167
+rel_err : 0.013323953109793365
+Epoch 263 Train loss : 0.01165
+rel_err : 0.01328633127734065
+Epoch 264 Train loss : 0.01162
+rel_err : 0.013225433055777103
+Epoch 265 Train loss : 0.01159
+rel_err : 0.013298368516843765
+Epoch 266 Train loss : 0.01157
+rel_err : 0.013265970654319972
+Epoch 267 Train loss : 0.01156
+rel_err : 0.013172960616648197
+Epoch 268 Train loss : 0.01154
+rel_err : 0.013208027253858745
+Epoch 269 Train loss : 0.01151
+rel_err : 0.013125652333255857
+Epoch 270 Train loss : 0.01149
+rel_err : 0.01317363889887929
+Epoch 271 Train loss : 0.01148
+rel_err : 0.01316678654635325
+Epoch 272 Train loss : 0.01146
+rel_err : 0.013111087796278297
+Epoch 273 Train loss : 0.01144
+rel_err : 0.013102273172698915
+Epoch 274 Train loss : 0.01142
+rel_err : 0.013086425252258777
+Epoch 275 Train loss : 0.01141
+rel_err : 0.01308743611909449
+Epoch 276 Train loss : 0.01140
+rel_err : 0.013052187785506248
+Epoch 277 Train loss : 0.01138
+rel_err : 0.013041582677979023
+Epoch 278 Train loss : 0.01137
+rel_err : 0.013056255052797497
+Epoch 279 Train loss : 0.01135
+rel_err : 0.01304772132774815
+Epoch 280 Train loss : 0.01134
+rel_err : 0.013016974595375359
+Epoch 281 Train loss : 0.01133
+rel_err : 0.013009247209411115
+Epoch 282 Train loss : 0.01132
+rel_err : 0.013043759646825493
+Epoch 283 Train loss : 0.01131
+rel_err : 0.013001804065424949
+Epoch 284 Train loss : 0.01130
+rel_err : 0.012990323952399194
+Epoch 285 Train loss : 0.01129
+rel_err : 0.012983400193043053
+Epoch 286 Train loss : 0.01129
+rel_err : 0.012981807251926512
+Epoch 287 Train loss : 0.01128
+rel_err : 0.012985945260152221
+Epoch 288 Train loss : 0.01127
+rel_err : 0.012979802209883928
+Epoch 289 Train loss : 0.01126
+rel_err : 0.012967428052797913
+Epoch 290 Train loss : 0.01126
+rel_err : 0.012966180541552604
+Epoch 291 Train loss : 0.01126
+rel_err : 0.012960353498347104
+Epoch 292 Train loss : 0.01125
+rel_err : 0.012958893396425992
+Epoch 293 Train loss : 0.01125
+rel_err : 0.012958039275836199
+Epoch 294 Train loss : 0.01124
+rel_err : 0.012957872501574456
+Epoch 295 Train loss : 0.01124
+rel_err : 0.012955631541553886
+Epoch 296 Train loss : 0.01124
+rel_err : 0.012954597228672355
+Epoch 297 Train loss : 0.01124
+rel_err : 0.01295452929334715
+Epoch 298 Train loss : 0.01123
+rel_err : 0.012954005724750459
+Epoch 299 Train loss : 0.01123
+rel_err : 0.012953887728508562
+save model
