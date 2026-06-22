@@ -182,7 +182,7 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE'
             data_sampled.y = data_sampled.y[idx]
             data_sampled.surf = data_sampled.surf[idx]
 
-            if name_mod != 'PointNet' and name_mod != 'MLP':
+            if name_mod not in ['PointNet', 'MLP', 'Transolver']:
                 data_sampled.edge_index = nng.radius_graph(x=data_sampled.pos.to(device), r=hparams['r'], loop=True,
                                                            max_num_neighbors=int(hparams['max_neighbors'])).cpu()
 
@@ -222,7 +222,7 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE'
                             data_sampled.y = data_sampled.y[idx]
                             data_sampled.surf = data_sampled.surf[idx]
 
-                            if name_mod != 'PointNet' and name_mod != 'MLP':
+                            if name_mod not in ['PointNet', 'MLP', 'Transolver']:
                                 data_sampled.edge_index = nng.radius_graph(x=data_sampled.pos.to(device),
                                                                            r=hparams['r'], loop=True,
                                                                            max_num_neighbors=int(
