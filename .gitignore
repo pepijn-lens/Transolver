@@ -166,3 +166,11 @@ cython_debug/
 .claude
 REPRODUCTION_PLAN.md
 CLAUDE.md
+
+Aircraft-Design/
+BLOG.md
+PDE-Solving-StandardBenchmark/results_darcy_ablation/
+PDE-Solving-StandardBenchmark/results_figure5a/
+blog_figures/
+transolver+.pdf
+transolver.pdf
