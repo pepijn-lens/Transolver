@@ -164,3 +164,29 @@ Epoch  172  train_relL2 0.05348
 Epoch  173  train_relL2 0.05278
 Epoch  174  train_relL2 0.05229
 Epoch  175  train_relL2 0.05187
+Epoch  176  train_relL2 0.05161
+Epoch  177  train_relL2 0.05094
+Epoch  178  train_relL2 0.05057
+Epoch  179  train_relL2 0.05030
+Epoch  180  train_relL2 0.05002  val_relL2 0.09810  [Cp:0.1279  Rho:0.1530  U:0.0400  V:0.2162  W:0.1658  Pressure:0.0979]
+Epoch  181  train_relL2 0.04987
+Epoch  182  train_relL2 0.04958
+Epoch  183  train_relL2 0.04932
+Epoch  184  train_relL2 0.04915
+Epoch  185  train_relL2 0.04896
+Epoch  186  train_relL2 0.04880
+Epoch  187  train_relL2 0.04864
+Epoch  188  train_relL2 0.04852
+Epoch  189  train_relL2 0.04840
+Epoch  190  train_relL2 0.04832  val_relL2 0.09823  [Cp:0.1280  Rho:0.1537  U:0.0396  V:0.2167  W:0.1662  Pressure:0.0982]
+Epoch  191  train_relL2 0.04825
+Epoch  192  train_relL2 0.04818
+Epoch  193  train_relL2 0.04813
+Epoch  194  train_relL2 0.04808
+Epoch  195  train_relL2 0.04805
+Epoch  196  train_relL2 0.04802
+Epoch  197  train_relL2 0.04801
+Epoch  198  train_relL2 0.04799
+Epoch  199  train_relL2 0.04799  val_relL2 0.09807  [Cp:0.1279  Rho:0.1530  U:0.0397  V:0.2166  W:0.1661  Pressure:0.0977]
+Done in 7625.7s. Saved -> ./checkpoints/aircraft_Transolver.pt
+Done. Checkpoint: ./checkpoints/aircraft_Transolver.pt

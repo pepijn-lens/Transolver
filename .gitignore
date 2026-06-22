@@ -164,3 +164,8 @@ CLAUDE.md
 PDE-Solving-StandardBenchmark/checkpoints/
 PDE-Solving-StandardBenchmark/results_darcy_ablation/
 PDE-Solving-StandardBenchmark/results_figure5a/
+
+BLOG.md
+blog_figures/
+transolver+.pdf
+transolver.pdf
