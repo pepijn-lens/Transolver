@@ -22,6 +22,7 @@ parser.add_argument('--my_path',
                     default='/data/path', type=str)
 parser.add_argument('--save_path',
                     default='metrics', type=str)
+parser.add_argument('--resume', action='store_true', help='Resume from latest checkpoint')
 args = parser.parse_args()
 
 with open(args.my_path + '/manifest.json', 'r') as f:
@@ -90,7 +91,7 @@ for i in range(args.nmodel):
     log_path = osp.join(args.save_path, args.task, args.model)  # path where you want to save log and figures
     print('start training')
     model = train.main(device, train_dataset, val_dataset, model, hparams, log_path,
-                       criterion='MSE_weighted', val_iter=10, reg=args.weight, name_mod=args.model, val_sample=True)
+                       criterion='MSE_weighted', val_iter=10, reg=args.weight, name_mod=args.model, val_sample=True, resume=args.resume)
     print('end training')
     models.append(model)
 torch.save(models, osp.join(args.save_path, args.task, args.model, args.model))

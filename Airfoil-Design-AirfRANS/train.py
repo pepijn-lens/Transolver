@@ -119,7 +119,7 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE', reg=1, val_iter=10,
-         name_mod='GraphSAGE', val_sample=True):
+         name_mod='GraphSAGE', val_sample=True, resume=False):
     '''
         Args:
         device (str): device on which you want to do the computation.
@@ -144,6 +144,20 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE'
     )
     val_loader = DataLoader(val_dataset, batch_size=1)
     start = time.time()
+    
+    # --- ADDITION ---
+    start_epoch = 0
+    checkpoint_file = osp.join(path, 'latest_checkpoint.pth')
+
+    if resume and osp.exists(checkpoint_file):
+        print(f"--> Loading checkpoint from {checkpoint_file}")
+        checkpoint = torch.load(checkpoint_file, map_location=device, weights_only=False)
+        model = checkpoint['model']
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
+        print(f"--> Resuming training from epoch {start_epoch}")
+    # ------------------------------
 
     train_loss_surf_list = []
     train_loss_vol_list = []
@@ -154,7 +168,8 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE'
     val_surf_var_list = []
     val_vol_var_list = []
 
-    pbar_train = tqdm(range(hparams['nb_epochs']), position=0)
+    #pbar_train = tqdm(range(hparams['nb_epochs']), position=0)
+    pbar_train = tqdm(range(start_epoch, hparams['nb_epochs']), position=0, initial=start_epoch, total=hparams['nb_epochs'])
     for epoch in pbar_train:
         train_dataset_sampled = []
         for data in train_dataset:
@@ -257,6 +272,16 @@ def main(device, train_dataset, val_dataset, Net, hparams, path, criterion='MSE'
                 pbar_train.set_postfix(train_loss=train_loss, loss_surf=loss_surf, val_loss=val_loss, val_surf=val_surf)
         else:
             pbar_train.set_postfix(train_loss=train_loss, loss_surf=loss_surf)
+
+        # --- ADD THIS BLOCK INSIDE THE EPOCH LOOP ---
+        if epoch % 10 == 0:
+            torch.save({
+                'epoch': epoch,
+                'model': model,
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': lr_scheduler.state_dict(),
+            }, checkpoint_file)
+        # --------------------------------------------
 
     loss_surf_var_list = np.array(loss_surf_var_list)
     loss_vol_var_list = np.array(loss_vol_var_list)
