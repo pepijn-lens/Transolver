@@ -52,7 +52,7 @@ class Physics_Attention_Irregular_Mesh(nn.Module):
         v_slice_token = self.to_v(slice_token)
         dots = torch.matmul(q_slice_token, k_slice_token.transpose(-1, -2)) * self.scale
         attn = self.softmax(dots)
-        attn = self.dropout(attn)
+        attn = self.dropout(attn)  
         out_slice_token = torch.matmul(attn, v_slice_token)  # B H G D
 
         ### (3) Deslice
