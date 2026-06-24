@@ -16,6 +16,7 @@ Run:
 Outputs PNGs into the directory containing this script.
 """
 
+import json
 import os
 import re
 
@@ -184,11 +185,106 @@ def plot_table4_efficiency():
     print("wrote", out)
 
 
+# ---------------------------------------------------------------------------
+# Transolver+ on ShapeNet-Car (Jasraj, §4.2)
+# ---------------------------------------------------------------------------
+
+TPP_DIR = os.path.join(REPO, "Transolver_plus")
+TPP_EPOCH_LOG = os.path.join(TPP_DIR, "output", "0", "200_0.5", "epoch_log.jsonl")
+PAPER_SURF = 0.0745
+PAPER_VOL = 0.0207
+
+
+def parse_transolverplus_log():
+    """Return (epochs, surf, vol) at the epochs where validation was run."""
+    ep, surf, vol = [], [], []
+    with open(TPP_EPOCH_LOG, "r", errors="ignore") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            d = json.loads(line)
+            if d.get("surf_l2re") is not None:
+                ep.append(int(d["epoch"]))
+                surf.append(float(d["surf_l2re"]))
+                vol.append(float(d["vol_l2re"]))
+    return ep, surf, vol
+
+
+def plot_transolverplus_car_curves():
+    ep, surf, vol = parse_transolverplus_log()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2))
+    for ax, ser, base, title, col in (
+        (ax1, surf, PAPER_SURF, "Surf L2RE (surface pressure)", "#c44e52"),
+        (ax2, vol, PAPER_VOL, "Volume L2RE (surrounding velocity)", "#55a868"),
+    ):
+        ax.plot(ep, ser, color=col, lw=1.8, marker="o", ms=4,
+                label="Transolver+ (this work)")
+        ax.axhline(base, color="gray", ls="--", lw=1.5,
+                   label=f"Transolver baseline ({base:.4f})")
+        ax.set_xlabel("epoch")
+        ax.set_ylabel("relative L2")
+        ax.set_title(title)
+        ax.legend()
+        ax.grid(alpha=0.3)
+    fig.suptitle("Transolver+ on ShapeNet-Car — paper metrics vs epoch (200 epochs)")
+    fig.tight_layout()
+    out = os.path.join(HERE, "transolverplus_car_curves.png")
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    print("wrote", out, f"(final surf {surf[-1]:.4f}, final vol {vol[-1]:.4f})")
+
+
+def plot_transolverplus_car_ablation():
+    """Bar chart of the slice/depth ablation runs vs the paper baselines."""
+    runs = []
+    for sub in ("car_Transolver_plus_L4_H256_S32", "car_Transolver_plus_L8_H256_S32"):
+        p = os.path.join(TPP_DIR, "results", sub, "result.json")
+        if os.path.exists(p):
+            runs.append(json.load(open(p)))
+    # main_car.py run (best checkpoint) from the analysis summary
+    summ = os.path.join(TPP_DIR, "output", "0", "200_0.5", "plots",
+                        "analysis_summary.json")
+    main = json.load(open(summ)) if os.path.exists(summ) else None
+
+    labels, surf, vol = [], [], []
+    if main is not None:
+        labels.append("main\nL4·S32 (1.74M)")
+        surf.append(main["best_surf_l2re"]); vol.append(main["best_vol_l2re"])
+    for r in runs:
+        labels.append(f"L{r['n_layers']}·S{r['slice_num']} ({r['nb_params']/1e6:.2f}M)")
+        surf.append(r["surf_l2re"]); vol.append(r["vol_l2re"])
+
+    x = np.arange(len(labels)); w = 0.38
+    fig, ax = plt.subplots(figsize=(8, 4.4))
+    ax.bar(x - w / 2, surf, w, color="#c44e52", label="Surf L2RE")
+    ax.bar(x + w / 2, vol, w, color="#55a868", label="Volume L2RE")
+    ax.axhline(PAPER_SURF, color="#c44e52", ls="--", lw=1.2,
+               label=f"Transolver Surf baseline ({PAPER_SURF})")
+    ax.axhline(PAPER_VOL, color="#55a868", ls="--", lw=1.2,
+               label=f"Transolver Vol baseline ({PAPER_VOL})")
+    for xi, (s, v) in enumerate(zip(surf, vol)):
+        ax.text(xi - w / 2, s + 0.002, f"{s:.3f}", ha="center", fontsize=8)
+        ax.text(xi + w / 2, v + 0.002, f"{v:.3f}", ha="center", fontsize=8)
+    ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=9)
+    ax.set_ylabel("relative L2 error")
+    ax.set_title("Transolver+ ShapeNet-Car ablation vs. Transolver paper baseline")
+    ax.legend(fontsize=8)
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout()
+    out = os.path.join(HERE, "transolverplus_car_ablation.png")
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    print("wrote", out)
+
+
 def main():
     plot_aircraft_curves()
     plot_aircraft_per_field()
     plot_table4_error()
     plot_table4_efficiency()
+    plot_transolverplus_car_curves()
+    plot_transolverplus_car_ablation()
     # NOTE: the Figure 5(a) slice visualization
     # (blog_figures/figure5a__frac0.5_scatter_s3_per_slice.png) is produced by
     # PDE-Solving-StandardBenchmark/visualize_figure5a.py, not by this script.
