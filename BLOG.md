@@ -87,7 +87,7 @@ algorithm variant.
 
 ## 3. Pepijn's experiments
 
-### 3.1 Table 4 — slice-count (`M`) ablation on Elasticity *(Ablation study + Reproduced)*
+### 3.1 Table 4 — slice-count (`M`) ablation on Elasticity and Darcy *(Ablation study + Reproduced)*
 
 **What the paper claims.** Table 4 sweeps the number of slices `M ∈ {1, …, 1024}` on Elasticity and Darcy and
 reports relative-L2 error plus efficiency (peak memory, time/epoch on a 1024-point mesh, batch 1). The paper's
@@ -97,9 +97,9 @@ slightly *degrades*** accuracy ("too-large `M` fragments the physics domain"); t
 
 **Our setup.** Run on **Kaggle, 2× NVIDIA T4** (one `M` per GPU, sequentially), using the ablation harness in
 `PDE-Solving-StandardBenchmark/` (`run_table4.sh`, `benchmark_efficiency.py`, `collect_results.py`). The single deliberate
-deviation: **300 epochs instead of the paper's 500**, due to limited compute. We reproduced the **Elasticity**
-column across all ten slice counts; the Darcy commands are wired up but were not run to completion under our budget.
-Results are tracked in git (`logs/elas_M*.log`, `results/efficiency.csv`).
+deviation: **300 epochs instead of the paper's 500**, due to limited compute. We reproduced both the **Elasticity**
+and **Darcy** columns across all ten slice counts.
+Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/efficiency.csv`).
 
 **Results.**
 
@@ -121,17 +121,34 @@ Results are tracked in git (`logs/elas_M*.log`, `results/efficiency.csv`).
 *Reproduction (blue) vs. paper Table 4 (orange) on Elasticity. Both agree that one slice is bad and that more
 slices help; they diverge in the tail.*
 
+**Darcy results.**
+
+| `M` | Rel-L2 (ours, 300 ep) | Rel-L2 (paper, 500 ep) |
+|---:|:---:|:---:|
+| 1 | 0.0460 | 0.0253 |
+| 8 | 0.0093 | 0.0068 |
+| 16 | 0.0079 | 0.0060 |
+| 32 | 0.0068 | 0.0055 |
+| 64 | 0.0062 | 0.0052 |
+| 96 | 0.0053 | 0.0051 |
+| 128 | 0.0053 | **0.0049** |
+| 256 | 0.0051 | 0.0052 |
+| 512 | 0.0056 | 0.0054 |
+| 1024 | 0.0059 | 0.0057 |
+
 **Findings.**
 
-1. **The qualitative trend reproduces.** `M=1` is clearly the worst (global pooling, no physical correlations), and
+1. **The qualitative trend reproduces on both tasks.** `M=1` is clearly the worst (global pooling, no physical correlations), and
    error drops sharply as `M` increases — exactly the paper's central message about *why* Physics-Attention works.
-2. **The "too-large `M` hurts" claim did *not* reproduce.** In the paper, error bottoms out at `M=256` and rises
-   for `M=512, 1024`. In our runs error keeps **falling monotonically through `M=1024` (best, 0.0059)**. The most
+2. **The "too-large `M` hurts" claim did *not* reproduce on Elasticity.** In the paper, error bottoms out at `M=256` and rises
+   for `M=512, 1024`. In our Elasticity runs error keeps **falling monotonically through `M=1024` (best, 0.0059)**. The most
    likely cause is the **reduced 300-epoch budget**: at very large `M` the model has many more slice parameters and
-   plausibly needs the full 500 epochs before over-fragmentation manifests as test-error degradation. Data version,
+   plausibly needs the full 500 epochs before over-fragmentation manifests as test-error degradation. **On Darcy, however,
+   the pattern is more nuanced**: our runs bottom out around `M=256–512` (best 0.0051 at `M=256`) and rise slightly for
+   `M=1024` (0.0059), which is qualitatively consistent with the paper's claim of a large-`M` dip. Data version,
    seed, and hardware (T4 vs. the paper's GPU) may also contribute. *Consequence:* the paper's practical
    recommendation (`M=64`, easy to tune in `[32, 256]`) is sound for efficiency, but the specific claim that
-   `M=1024` is harmful is budget-sensitive and we cannot confirm it.
+   `M=1024` is harmful appears task-dependent and budget-sensitive — confirmed on Darcy but not on Elasticity.
 3. **Absolute efficiency numbers are hardware-specific and should not be compared directly.** Our T4 peak-memory
    measurements (0.07–1.0 GB) are *lower in absolute terms* than the paper's (0.60–1.53 GB) — the paper's figures
    include a large fixed baseline — yet our memory grows much faster *relatively* (≈15× vs. ≈2.5×). Time/epoch is
@@ -422,17 +439,18 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
 
 **Largely yes, with caveats.** The *core conclusions* of Transolver reproduced:
 
-- Physics-Attention's value is real: a single slice (`M=1`) collapses the model, and more slices monotonically help
-  on Elasticity (§3.1).
+- Physics-Attention's value is real: a single slice (`M=1`) collapses the model, and more slices substantially help
+  on both Elasticity and Darcy (§3.1).
 - The learned slices are physically meaningful and **robust to mesh resampling** (§3.3).
 - The architecture is **general**: it ports to an unseen aircraft surface dataset and trains to a sensible ~9.8%
   error with no changes (§3.2).
 
 **What did not reproduce / needs a caveat:**
 
-- The fine-grained claim that **very large `M` degrades accuracy** did *not* hold under our **300-epoch** budget —
-  our error kept improving through `M=1024`. This does not contradict the paper's *recommendation* (`M=64` for
-  efficiency) but shows that conclusion is **training-budget-sensitive**.
+- The fine-grained claim that **very large `M` degrades accuracy** is **task-dependent** under our **300-epoch** budget:
+  it did *not* hold on Elasticity (error kept falling through `M=1024`), but *did* hold on Darcy (error bottomed at
+  `M=256` and rose for `M=1024`). This does not contradict the paper's *recommendation* (`M=64` for efficiency) but
+  shows that the specific large-`M` dip is **training-budget- and task-sensitive**.
 - **Efficiency numbers are hardware-specific**: absolute memory/time on 2× T4 are not comparable to the paper's, and
   only the relative scaling should be read across setups.
 - A reproduction of Figure 5(a) revealed a likely **colormap-normalization artifact** in the original figure: the
