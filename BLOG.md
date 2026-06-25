@@ -101,40 +101,20 @@ deviation: **300 epochs instead of the paper's 500**, due to limited compute. We
 and **Darcy** columns across all ten slice counts.
 Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/efficiency.csv`).
 
-**Results.**
+**Results.** Efficiency columns are measured on a synthetic 1024-point mesh (batch size 1) and are task-agnostic.
 
-| `M` | Rel-L2 (ours, 300 ep) | Rel-L2 (paper, 500 ep) | Peak mem, ours (GB, T4) | Time/epoch, ours (s) | Time/epoch, paper (s) |
-|---:|:---:|:---:|:---:|:---:|:---:|
-| 1 | 0.0256 | 0.0148 | 0.069 | 29.0 | 37.8 |
-| 8 | 0.0111 | 0.0071 | 0.073 | 29.3 | 37.8 |
-| 16 | 0.0130 | 0.0067 | 0.078 | 28.5 | 38.0 |
-| 32 | 0.0100 | 0.0067 | 0.087 | 28.8 | 38.0 |
-| 64 | 0.0094 | 0.0064 | 0.109 | 29.1 | 38.2 |
-| 96 | 0.0081 | 0.0061 | 0.132 | 28.6 | 38.3 |
-| 128 | 0.0085 | 0.0058 | 0.156 | 29.1 | 38.8 |
-| 256 | 0.0083 | **0.0054** | 0.254 | 29.0 | 39.1 |
-| 512 | 0.0071 | 0.0059 | 0.473 | 44.3 | 39.8 |
-| 1024 | **0.0059** | 0.0068 | 1.035 | 84.8 | 40.5 |
-
-![Slice-count ablation: reproduction vs. paper](blog_figures/table4_error_vs_M.png)
-
-*Reproduction (blue) vs. paper Table 4 (orange) on Elasticity. Both agree that one slice is bad and that more
-slices help; they diverge in the tail.*
-
-**Darcy results.**
-
-| `M` | Rel-L2 (ours, 300 ep) | Rel-L2 (paper, 500 ep) |
-|---:|:---:|:---:|
-| 1 | 0.0460 | 0.0253 |
-| 8 | 0.0093 | 0.0068 |
-| 16 | 0.0079 | 0.0060 |
-| 32 | 0.0068 | 0.0055 |
-| 64 | 0.0062 | 0.0052 |
-| 96 | 0.0053 | 0.0051 |
-| 128 | 0.0053 | **0.0049** |
-| 256 | 0.0051 | 0.0052 |
-| 512 | 0.0056 | 0.0054 |
-| 1024 | 0.0059 | 0.0057 |
+| `M` | Elas, ours | Elas, paper | Darcy, ours | Darcy, paper | Peak mem (GB) | Time/ep, ours (s) | Time/ep, paper (s) |
+|---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | 0.0256 | 0.0148 | 0.0460 | 0.0253 | 0.069 | 29.0 | 37.8 |
+| 8 | 0.0111 | 0.0071 | 0.0093 | 0.0068 | 0.073 | 29.3 | 37.8 |
+| 16 | 0.0130 | 0.0067 | 0.0079 | 0.0060 | 0.078 | 28.5 | 38.0 |
+| 32 | 0.0100 | 0.0067 | 0.0068 | 0.0055 | 0.087 | 28.8 | 38.0 |
+| 64 | 0.0094 | 0.0064 | 0.0062 | 0.0052 | 0.109 | 29.1 | 38.2 |
+| 96 | 0.0081 | 0.0061 | 0.0053 | 0.0051 | 0.132 | 28.6 | 38.3 |
+| 128 | 0.0085 | 0.0058 | 0.0053 | **0.0049** | 0.156 | 29.1 | 38.8 |
+| 256 | 0.0083 | **0.0054** | **0.0051** | 0.0052 | 0.254 | 29.0 | 39.1 |
+| 512 | 0.0071 | 0.0059 | 0.0056 | 0.0054 | 0.473 | 44.3 | 39.8 |
+| 1024 | **0.0059** | 0.0068 | 0.0059 | 0.0057 | 1.035 | 84.8 | 40.5 |
 
 **Findings.**
 
