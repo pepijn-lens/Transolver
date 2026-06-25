@@ -1,6 +1,6 @@
 # Reproducing *Transolver: A Fast Transformer Solver for PDEs on General Geometries*
 
-**A reproducibility study — DSAIT4205 Fundamental Research in Machine and Deep Learning (2025/26 Q4), TU Delft**
+**A reproducibility study for DSAIT4205 Fundamental Research in Machine and Deep Learning (2025/26 Q4), TU Delft**
 
 **Team:** Pepijn Lens · Nikshith Menta · Jasraj Anand
 
@@ -14,11 +14,11 @@ we (1) re-ran the **slice-count ablation of Table 4** on Elasticity, (2) reprodu
 visualization of Figure 5(a)**, (3) ported the model to a **new aircraft surface dataset** introduced by the
 follow-up *Transolver++* paper, (4) set up the **ShapeNet-Car / AirfRANS design benchmarks (Table 3)**, and (5)
 implemented a **Transolver+ algorithm variant** (Transolver with *Gumbel-softmax* slice assignment) and trained it
-on the *original* ShapeNet-Car data. The headline findings: the qualitative story of the paper holds up well — more
-slices help, a single slice collapses the method, and the learned slices are physically meaningful — but some
+on the *original* ShapeNet-Car data. The headline findings: the qualitative story of the paper holds up well, more
+slices help, a single slice collapses the method, and the learned slices are physically meaningful, but some
 quantitative details (notably the claimed *degradation* at very large slice counts) **did not reproduce** under a
 reduced training budget; and our Transolver+ variant **nearly matches the original on surface pressure (0.084 vs.
-0.0745)** but is **~4.5× worse on the surrounding velocity field (0.093 vs. 0.0207)** — a sharp, metric-dependent
+0.0745)** but is **~4.5× worse on the surrounding velocity field (0.093 vs. 0.0207)**, a sharp, metric-dependent
 result showing that the Gumbel-softmax "harder slice" change (and/or our reduced setup) helps the easy field and
 hurts the hard one.
 
@@ -46,7 +46,7 @@ each point to one of `M` **slices** ("physical states"), encodes each slice into
 
 The paper reports state-of-the-art on six standard benchmarks (+22% relative) and on car/airfoil design tasks.
 
-### Why reproduce it — and why these experiments
+### Why reproduce it, and why these experiments
 
 Transolver is influential and was quickly followed by **Transolver++** (Luo et al., 2025), which scales the same
 "learn physical states" idea to **million-point geometries** including **3D aircraft** designs. This sequel framed
@@ -75,7 +75,7 @@ algorithm variant.
 | Member | Experiment(s) | Criterion / criteria | Status |
 |---|---|---|---|
 | **Pepijn Lens** | Table 4 slice-count ablation (Elasticity); Figure 5(a) slice visualization; original Transolver on the new aircraft dataset | **Ablation study**, **Reproduced**, **New data** | ✅ §3 |
-| **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from Pepijn's Table 4 run | **Reproduced** | 📝 stub — §4.1 |
+| **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from Pepijn's Table 4 run | **Reproduced** | 📝 stub (§4.1) |
 | **Jasraj Anand** | Transolver+ (Gumbel-softmax slice assignment) on ShapeNet-Car, + depth/slice ablation | **New algorithm variant** (+ small ablation) | ✅ §4.2 |
 
 > The codebase is organized as four *independent* sub-projects (`PDE-Solving-StandardBenchmark/`,
@@ -87,7 +87,7 @@ algorithm variant.
 
 ## 3. Slice-count ablation, learned-slice visualization, and new aircraft data
 
-### 3.1 Table 4 — slice-count (`M`) ablation on Elasticity and Darcy *(Ablation study + Reproduced)*
+### 3.1 Table 4: slice-count (`M`) ablation on Elasticity and Darcy *(Ablation study + Reproduced)*
 
 **What the paper claims.** Table 4 sweeps the number of slices `M ∈ {1, …, 1024}` on Elasticity and Darcy and
 reports relative-L2 error plus efficiency (peak memory, time/epoch on a 1024-point mesh, batch 1). The paper's
@@ -119,7 +119,7 @@ Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/ef
 **Findings.**
 
 1. **The qualitative trend reproduces on both tasks.** `M=1` is clearly the worst (global pooling, no physical correlations), and
-   error drops sharply as `M` increases — exactly the paper's central message about *why* Physics-Attention works.
+   error drops sharply as `M` increases, exactly the paper's central message about *why* Physics-Attention works.
 2. **The "too-large `M` hurts" claim did *not* reproduce on Elasticity.** In the paper, error bottoms out at `M=256` and rises
    for `M=512, 1024`. In our Elasticity runs error keeps **falling monotonically through `M=1024` (best, 0.0059)**. The most
    likely cause is the **reduced 300-epoch budget**: at very large `M` the model has many more slice parameters and
@@ -127,10 +127,10 @@ Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/ef
    the pattern does match**: our runs bottom out at `M=256' (best 0.0050) and rise slightly for 'M=512' and
    `M=1024`, which is consistent with the paper's claim of a large-`M` dip. *Consequence:* the paper's practical
    recommendation (`M=64`, easy to tune in `[32, 256]`) is sound for efficiency, but the specific claim that
-   `M=1024` is harmful appears task-dependent and budget-sensitive — confirmed on Darcy but not on Elasticity.
+   `M=1024` is harmful appears task-dependent and budget-sensitive, confirmed on Darcy but not on Elasticity.
 3. **Absolute efficiency numbers are hardware-specific and should not be compared directly.** Our T4 peak-memory
-   measurements (0.07–1.0 GB) are *lower in absolute terms* than the paper's (0.60–1.53 GB) — the paper's figures
-   include a large fixed baseline — yet our memory grows much faster *relatively* (≈15× vs. ≈2.5×). Time/epoch is
+   measurements (0.07–1.0 GB) are *lower in absolute terms* than the paper's (0.60–1.53 GB); the paper's figures
+   include a large fixed baseline, yet our memory grows much faster *relatively* (≈15× vs. ≈2.5×). Time/epoch is
    flat (~29 s) until `M ≥ 512`, where the T4 hits a wall (44 s at 512, 85 s at 1024).
 
 ![Table 4 efficiency reproduction](blog_figures/table4_efficiency_vs_M.png)
@@ -143,7 +143,7 @@ hardware.*
 
 ---
 
-### 3.2 Figure 5(a) — learned-slice visualization *(Reproduced, qualitative)*
+### 3.2 Figure 5(a): learned-slice visualization *(Reproduced, qualitative)*
 
 **What the paper shows.** Figure 5(a) visualizes the 64 learned slice-weight maps from the last Physics-Attention
 layer on an Elasticity sample, side by side for the **original mesh** and a **50%-resampled mesh**, to argue that
@@ -151,7 +151,7 @@ slices capture coherent physical regions and that this assignment is robust to m
 
 **Our setup.** `Transolver_Irregular_Mesh`, `slice_num=64`, `n_hidden=128`, `n_heads=8`,
 `n_layers=8` (~0.71 M params), trained on Elasticity (972-point meshes) for 500 epochs (CosineAnnealing) to a final
-test **rel-L2 ≈ 0.0090** — close to the paper's main Elasticity result. `visualize_figure5a.py` extracts the
+test **rel-L2 ≈ 0.0090**, close to the paper's main Elasticity result. `visualize_figure5a.py` extracts the
 per-point slice weights (averaged over heads → `[N, 64]`), resamples the mesh at 50–80%, and renders all 64 slices
 for both meshes.
 
@@ -163,31 +163,31 @@ per-slice color normalization. The top four rows are the original mesh; the bott
 ![Paper's original Figure 5(a) for comparison](blog_figures/figure5a_paper_original.png)
 
 *The paper's original Figure 5(a) (Wu et al., 2024), reproduced here for comparison. Note how, between the original
-(top) and resampled (bottom) meshes, the corresponding tiles do **not** share colors — the discrepancy discussed
-below.*
+(top) and resampled (bottom) meshes, the corresponding tiles do **not** share colors (the discrepancy discussed
+below).*
 
 **Findings.**
 
 - **Qualitatively, the claim reproduces well:** the 64 slices learn smooth, spatially-coherent partitions of the
-  unit cell, and the resampled mesh recovers the *same* slice structure despite dropping half the points — exactly
+  unit cell, and the resampled mesh recovers the *same* slice structure despite dropping half the points, exactly
   the robustness Transolver advertises.
 - **One interesting discrepancy.** In *our* render, the spatial pattern of each slice **matches** between the
-  original and the resampled mesh — the same regions light up for the same slice index, regardless of which points
+  original and the resampled mesh: the same regions light up for the same slice index, regardless of which points
   were dropped. In the **paper's** figure (shown above), the corresponding tiles show **different spatial patterns**
   between original and resampled: the activated regions shift or reorganize across the two meshes for the same slice
   index. Since the slice-weight function is identical for both meshes (same trained weights, same coordinates), we
-  expect the patterns to be stable — and our reproduction confirms they are. We do not know why the paper's figure
+  expect the patterns to be stable, and our reproduction confirms they are. We do not know why the paper's figure
   shows pattern-level differences across the two meshes; it is a genuine open discrepancy. What we can say is that
   our result, where patterns are stable under resampling, **more directly supports the authors' robustness claim**
   than the figure they published.
 
 > **Reproducibility takeaway:** reproducing a figure can surface genuine discrepancies between what a paper claims
-> and what its published figure shows — here, our reproduction actually demonstrates the robustness claim more
+> and what its published figure shows; here, our reproduction actually demonstrates the robustness claim more
 > clearly than the original figure does.
 
 ---
 
-### 3.3 New data — the original Transolver on aircraft surfaces *(New data)*
+### 3.3 New data: the original Transolver on aircraft surfaces *(New data)*
 
 **Motivation.** *Transolver++* introduces a **3D aircraft** dataset to argue for its new million-scale machinery.
 We asked the prior question: how well does the **original** Transolver (no Transolver++ additions) already do on
@@ -223,7 +223,7 @@ resume at epoch 168). Metric: relative-L2.
 **Findings.**
 
 - The original Transolver **trains stably and transfers to aircraft surface data out of the box**, reaching an
-  overall test relative-L2 of **≈9.8%** in ~2 hours on one GPU with no architecture changes — a positive signal for
+  overall test relative-L2 of **≈9.8%** in ~2 hours on one GPU with no architecture changes, a positive signal for
   the generality claim, and a sensible *baseline* for what Transolver++ improves upon.
 - Accuracy is **very uneven across fields**: the dominant streamwise velocity `U` is predicted to ~4%, whereas the
   small-magnitude cross-flow components `V` (and to a lesser extent `Rho`, `W`) are far harder (~15–22%). These are
@@ -233,27 +233,27 @@ resume at epoch 168). Metric: relative-L2.
   150-case dataset is the binding constraint, not the optimizer.
 
 > This is an *exploratory* new-data result: there is no original-paper number for this exact setup to match against
-> (Transolver++ reports on its own pipeline), so we frame it as "does the architecture port and behave sensibly?" —
-> and it does.
+> (Transolver++ reports on its own pipeline), so we frame it as "does the architecture port and behave sensibly?"
+> And it does.
 
 ---
 
 ## 4. Teammate experiments
 
-### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b) — *Nikshith Menta (Reproduced)*
+### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b), by *Nikshith Menta (Reproduced)*
 
 Reproduction of the **design-task results (Table 3)** using the authors' code:
 
 - **ShapeNet-Car** (`Car-Design-ShapeNetCar/`): surface pressure / drag prediction on car geometries (requires
   `pytorch_geometric` + `torch-cluster`).
 - **AirfRANS** (`Airfoil-Design-AirfRANS/`): RANS airfoil task, `--task full` (and possibly `scarce/reynolds/aoa`).
-- **Figure 5(b)** — the *resampling-robustness* counterpart to §3.2 — rendered from the **`elas_256.pt`** checkpoint
+- **Figure 5(b)**, the *resampling-robustness* counterpart to §3.2, rendered from the **`elas_256.pt`** checkpoint
   produced by Pepijn's `M=256` Table 4 run (a nice cross-experiment reuse).
 
 > **TODO (Nikshith):** fill in setup (hardware, epochs, hyperparameters), the metrics below, and a short discussion
 > of whether Table 3 reproduces (volume/surface relative error, drag/lift coefficient error, Spearman rank
 > correlation). The **ShapeNet-Car surface + volume** rows below are the direct baselines for Jasraj's Transolver+
-> comparison in §4.2 — once filled in, they replace the paper values used there (Jasraj's direct-comparison runs of
+> comparison in §4.2; once filled in, they replace the paper values used there (Jasraj's direct-comparison runs of
 > the original Transolver failed at import, so §4.2 currently leans on the paper numbers).
 
 | Task | Metric | Paper | Reproduction |
@@ -267,15 +267,15 @@ Reproduction of the **design-task results (Table 3)** using the authors' code:
 
 ---
 
-### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car — *Jasraj (New algorithm variant)*
+### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car, by *Jasraj (New algorithm variant)*
 
 **The question.** The sequel **Transolver++** (Luo et al., ICML 2025) argues that the *soft* slice assignment in the
 original Physics-Attention smears each mesh point across many physical states, and that **harder, more distinct
-("eidetic") states** are better. We isolated *that one idea* as a clean algorithm variant — **Transolver+** — by
+("eidetic") states** are better. We isolated *that one idea* as a clean algorithm variant, **Transolver+**, by
 replacing the temperature-scaled `softmax` slice assignment with a **Gumbel-softmax**, and asked: **does sharpening
 the point-to-slice assignment actually help on the original ShapeNet-Car design task, and does it help the surface
 and the volume fields equally?** This is a focused *new-algorithm-variant* study: same data, same loss, same
-training recipe as the original car experiment — only the assignment operator changes — so any difference is
+training recipe as the original car experiment (only the assignment operator changes), so any difference is
 attributable to the Gumbel-softmax idea rather than to a different dataset or budget (ties back to §1: testing
 whether a paper's central conceptual change is robust on a different task).
 
@@ -285,14 +285,14 @@ whether a paper's central conceptual change is robust on a different task).
 softmax, producing harder, lower-entropy slice assignments (in the limit, a near-one-hot point→slice map). Everything
 else in the *Slice → Attend → Deslice* block is unchanged. *(The upstream Transolver++ repo also adds distributed
 `all_reduce` machinery for million-point multi-GPU meshes; that path is irrelevant on single-GPU ShapeNet-Car and is
-not what we test here — our variant is specifically the Gumbel-softmax assignment.)*
+not what we test here; our variant is specifically the Gumbel-softmax assignment.)*
 
 **The task & two metrics.** ShapeNet-Car (ML-CFD / `mlcfd`), the same design task as §4.1: **789 train / 100 val**
 geometries, fold 0. The model jointly predicts the **surface pressure** and the **surrounding velocity field**, and
 the paper reports *two* relative-L2 metrics, which behave very differently here:
 
-- **Surf L2RE** — relative L2 of surface pressure (surface nodes only).
-- **Volume L2RE** — relative L2 of the velocity field (all nodes).
+- **Surf L2RE**: relative L2 of surface pressure (surface nodes only).
+- **Volume L2RE**: relative L2 of the velocity field (all nodes).
 
 Loss is `loss_velo + 0.5·loss_press` (MSE on normalized fields), matching the original Transolver car recipe.
 Original-Transolver paper baselines (Wu et al. 2024, Table 3): **Surf 0.0745, Volume 0.0207**.
@@ -302,10 +302,10 @@ Original-Transolver paper baselines (Wu et al. 2024, Table 3): **Surf 0.0745, Vo
 `Transolver_plus/output/0/200_0.5/` (`summary_200.json`, `eval_results.json`, `plots/analysis_summary.json`) and the
 ablation runs in `Transolver_plus/results/`.
 
-> *Honest caveat — no in-house original-Transolver baseline.* We intended a head-to-head against the unmodified
+> *Honest caveat: no in-house original-Transolver baseline.* We intended a head-to-head against the unmodified
 > Transolver, but the benchmark jobs (`benchmark_car.py`) **failed at import** twice (`No module named 'timm'`, then a
 > `torchvision::nms` op mismatch with PyTorch 2.5.1). So the original Transolver was **never run by us** on this
-> setup — the comparison below uses the **paper's** Table-3 numbers. Nikshith's §4.1 reproduction will supply the
+> setup; the comparison below uses the **paper's** Table-3 numbers. Nikshith's §4.1 reproduction will supply the
 > matched in-house baseline.
 
 **Results.**
@@ -313,12 +313,12 @@ ablation runs in `Transolver_plus/results/`.
 | Model / config | Layers · Slices | Params | Surf L2RE | Volume L2RE | Source |
 |---|---|---:|:---:|:---:|---|
 | Transolver (paper, Table 3) | 8 · 64 | ~6 M | **0.0745** | **0.0207** | Wu et al. 2024 |
-| Transolver (our reproduction) | — | — | *TODO §4.1* | *TODO §4.1* | — |
+| Transolver (our reproduction) | N/A | N/A | *TODO §4.1* | *TODO §4.1* | N/A |
 | **Transolver+ (main run, best)** | 4 · 32 | 1.74 M | **0.0842** | **0.0927** | `eval_results.json` (epoch 190) |
 | Transolver+ (ablation) | 4 · 32 | 1.74 M | 0.0848 | 0.0938 | `results/…L4…S32` |
 | Transolver+ (ablation) | 8 · 32 | 3.34 M | 0.0855 | 0.0866 | `results/…L8…S32` |
 
-![Transolver+ on ShapeNet-Car — Surf and Volume L2RE vs epoch](blog_figures/transolverplus_car_curves.png)
+![Transolver+ on ShapeNet-Car: Surf and Volume L2RE vs epoch](blog_figures/transolverplus_car_curves.png)
 
 *Validation Surf L2RE (left) and Volume L2RE (right) vs. epoch for Transolver+, against the original-Transolver paper
 baselines (dashed). Both train cleanly to a plateau. Surface pressure (left) closes most of the gap to baseline;
@@ -327,21 +327,21 @@ the velocity field (right) plateaus far above it.*
 ![Transolver+ ShapeNet-Car ablation](blog_figures/transolverplus_car_ablation.png)
 
 *Depth/slice ablation: three Transolver+ configurations vs. the two paper baselines. The picture is consistent across
-configs — surface error sits just above the 0.0745 baseline; volume error sits ~4× above the 0.0207 baseline.*
+configs; surface error sits just above the 0.0745 baseline; volume error sits ~4× above the 0.0207 baseline.*
 
 **Findings.**
 
-1. **Training is stable and converges** — both metrics fall monotonically to a clean plateau by ~epoch 150–190
+1. **Training is stable and converges**: both metrics fall monotonically to a clean plateau by ~epoch 150–190
    (train/val loss track closely, no overfitting). The variant is a *working* model, not a failed run.
 2. **The result is sharply metric-dependent.** On **surface pressure**, Transolver+ nearly matches the original:
-   **0.0842 vs. 0.0745** — only ~0.01 absolute (~13% relative) worse. But on the **velocity field** it is **~4.5×
+   **0.0842 vs. 0.0745**, only ~0.01 absolute (~13% relative) worse. But on the **velocity field** it is **~4.5×
    worse: 0.0927 vs. 0.0207**. The velocity gap is the striking finding.
 3. **The gap is robust to depth and slice count** (the ablation): doubling depth (L4→L8, 1.74 M→3.34 M params) or
-   varying slices barely moves either metric — Surf stays ~0.084–0.086, Volume ~0.087–0.094. So the volume gap is
+   varying slices barely moves either metric; Surf stays ~0.084–0.086, Volume ~0.087–0.094. So the volume gap is
    **not** simply "too small a model"; it is structural to this variant/setup.
 4. **Interpretation.** The Gumbel-softmax pushes the slice assignment toward (near) one-hot. A *hard* assignment can
    capture the localized surface-pressure pattern adequately, but the **volume velocity field is smooth and
-   long-range** — reconstructing it well plausibly benefits from the *soft*, overlapping slice memberships that the
+   long-range**; reconstructing it well plausibly benefits from the *soft*, overlapping slice memberships that the
    original `softmax` provides, which the Gumbel "harder slice" change throws away. The extra assignment stochasticity
    may also inject gradient noise that the small 789-sample dataset cannot average out.
 5. **Caveat.** Transolver++'s README notes that reproducing its results needs tuning "different slice number and
@@ -351,7 +351,7 @@ configs — surface error sits just above the 0.0745 baseline; volume error sits
 
 > **Reproducibility takeaway:** a single headline metric can hide a sharp split. Isolating the sequel's core
 > idea (hard slice assignment) and reporting *both* task metrics shows it nearly preserves surface accuracy while
-> badly hurting the volume field — a nuance invisible if you only look at one number, and exactly the kind of thing
+> badly hurting the volume field, a nuance invisible if you only look at one number, and exactly the kind of thing
 > a careful reproduction surfaces.
 
 ---
@@ -362,15 +362,15 @@ One way to understand *why* the two models behave differently is to inspect the 
 of the last Physics-Attention layer on the same ShapeNet-Car sample. Each row/column in these heatmaps is one of
 the `M=32` learned slice-tokens; a bright cell at `(i, j)` means slice `i` attends strongly to slice `j`.
 
-**Transolver (last layer, 8 layers, `M=64`)** — produced by Nikshith from the `Car-Design-ShapeNetCar/`
+**Transolver (last layer, 8 layers, `M=64`)**, produced by Nikshith from the `Car-Design-ShapeNetCar/`
 checkpoint:
 
 ![Transolver: last-layer attention on Car-ShapeNet](blog_figures/transolver_car_attn_last_layer.jpg)
 
 *Attention among 32 tokens, last layer, Transolver. Each slice attends to a sparse set of other slices, with several
-strong off-diagonal peaks — indicating that distinct physical states exchange information selectively.*
+strong off-diagonal peaks, indicating that distinct physical states exchange information selectively.*
 
-**Transolver+ (last layer = layer 3, 4 layers, `M=32`)** — from
+**Transolver+ (last layer = layer 3, 4 layers, `M=32`)**, from
 `blog_figures/attn_layer3_mean_heads.png`:
 
 ![Transolver+: last-layer attention on Car-ShapeNet](blog_figures/transolver++_car_attn_last_layer.png)
@@ -379,11 +379,11 @@ strong off-diagonal peaks — indicating that distinct physical states exchange 
 number of key-columns attract attention from many queries, reflecting the harder, near-one-hot Gumbel-softmax
 assignments pushing each token toward a more isolated role.*
 
-**Comparison.** Both models show non-trivial inter-slice attention — the learned tokens are not just attending to
+**Comparison.** Both models show non-trivial inter-slice attention; the learned tokens are not just attending to
 themselves. The Transolver pattern (left) exhibits richer cross-slice mixing: multiple slices have moderate attention
 to many others, consistent with soft, overlapping memberships that let information flow broadly across the volume.
 The Transolver+ pattern (right) is sparser: a few "hub" key-columns dominate, while most entries are near zero.
-This structural difference maps directly onto the metric split in §4.2 — broad soft mixing supports the smooth
+This structural difference maps directly onto the metric split in §4.2: broad soft mixing supports the smooth
 global velocity field; sparse hard routing is sufficient for localized surface pressure but starves the volume field
 of cross-slice context.
 
@@ -392,7 +392,7 @@ of cross-slice context.
 
 ---
 
-## 5. Performance overview — Transolver vs. Transolver+ on ShapeNet-Car
+## 5. Performance overview: Transolver vs. Transolver+ on ShapeNet-Car
 
 The table below collects the key numbers from Jasraj's runs for reference. The bubble-chart analogue of Figure 6
 in the Transolver++ paper (running time vs. error, bubbles sized by parameter count) is deferred as a **TODO for
@@ -400,10 +400,10 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
 
 | Model | Layers | Slices | Params | Surf L2RE | Vol L2RE | Time/epoch (s) | Hardware |
 |---|---:|---:|---:|:---:|:---:|:---:|---|
-| Transolver (paper) | 8 | 64 | ~6 M | 0.0745 | 0.0207 | — | — |
-| Transolver (repro) | — | — | — | *TODO §4.1* | *TODO §4.1* | *TODO §4.1* | — |
+| Transolver (paper) | 8 | 64 | ~6 M | 0.0745 | 0.0207 | N/A | N/A |
+| Transolver (repro) | N/A | N/A | N/A | *TODO §4.1* | *TODO §4.1* | *TODO §4.1* | N/A |
 | **Transolver+ (main)** | 4 | 32 | 1.74 M | 0.0842 | 0.0927 | ~104 | A100 |
-| Transolver+ (L8·S32) | 8 | 32 | 3.34 M | 0.0855 | 0.0866 | — | A100 |
+| Transolver+ (L8·S32) | 8 | 32 | 3.34 M | 0.0855 | 0.0866 | N/A | A100 |
 
 > **TODO (Nikshith):** Once §4.1 numbers are in, produce a bubble chart analogous to Figure 6 of the Transolver++
 > paper: x-axis = running time (s/epoch), y-axis = relative L2 error (one axis per metric, or pick Vol L2RE as
@@ -413,7 +413,7 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
 
 ---
 
-## 6. Conclusion — do our results uphold the paper?
+## 6. Conclusion: do our results uphold the paper?
 
 **Largely yes, with caveats.** The *core conclusions* of Transolver reproduced:
 
@@ -433,16 +433,16 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
   only the relative scaling should be read across setups.
 - A reproduction of Figure 5(a) revealed a **pattern-level discrepancy** in the original figure: the paper's figure
   shows different spatial patterns across the original and resampled meshes for the same slice index, whereas our
-  reproduction shows stable patterns — more directly demonstrating the robustness claim. Why the paper's figure
+  reproduction shows stable patterns, more directly demonstrating the robustness claim. Why the paper's figure
   differs is an open question.
 
-**Extending the paper — the "harder slice" idea splits across metrics (§4.2).** Our Transolver+ variant, which
+**Extending the paper: the "harder slice" idea splits across metrics (§4.2).** Our Transolver+ variant, which
 replaces the soft `softmax` slice assignment with a Gumbel-softmax (isolating the sequel's central "eidetic states"
 idea), **nearly matches** the original on surface pressure (0.0842 vs. 0.0745) but is **~4.5× worse** on the velocity
 field (0.0927 vs. 0.0207), and this split is robust across depth/slice ablations. The attention map comparison
 (§4.3) provides a mechanistic picture: hard routing concentrates attention into a few hub-tokens, which is enough
 for localized surface pressure but deprives the smooth volume field of the broad cross-slice mixing that soft
-assignments naturally provide. *Consequence:* sharpening the slice assignment is not a free win — it appears to
+assignments naturally provide. *Consequence:* sharpening the slice assignment is not a free win; it appears to
 trade away the soft, overlapping memberships that the smooth volume field needs. (Important caveat: our direct
 in-house Transolver baseline failed to run, so this compares against the paper's numbers; a matched baseline and a
 temperature sweep are the next steps.)
@@ -481,15 +481,3 @@ python blog_figures/make_plots.py     # writes PNGs into blog_figures/
 - H. Luo, H. Wu, H. Zhou, L. Xing, Y. Di, J. Wang, M. Long. **Transolver++: An Accurate Neural Solver for PDEs on
   Million-Scale Geometries.** ICML 2025. arXiv:2502.02414.
 
----
-
-### Contributions (one-liners)
-
-- **Pepijn Lens** — Table 4 slice-count ablation on Elasticity (Kaggle 2× T4, 300 ep); ported the original
-  Transolver to the new aircraft surface dataset and ran it on the supercomputer (A100); reproduced the Figure 5(a)
-  slice visualization and identified the colormap discrepancy. *(Ablation study, New data, Reproduced.)*
-- **Nikshith Menta** — ShapeNet-Car & AirfRANS Table 3 reproduction; Figure 5(b) from `elas_256.pt`; attention map
-  extraction for the original Transolver on Car-ShapeNet (last layer, used in §4.3). *(Reproduced.)*
-- **Jasraj Anand** — Implemented the **Transolver+** variant (Gumbel-softmax / "eidetic" slice assignment) and trained it
-  on ShapeNet-Car (A100, 200 ep) with a depth/slice ablation; found it nearly matches the original on surface
-  pressure but is ~4.5× worse on the velocity field; extracted Transolver+ attention maps (§4.3). *(New algorithm variant.)*
