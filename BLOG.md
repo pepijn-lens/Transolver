@@ -85,7 +85,7 @@ algorithm variant.
 
 ---
 
-## 3. Pepijn's experiments
+## 3. Slice-count ablation, learned-slice visualization, and new aircraft data
 
 ### 3.1 Table 4 — slice-count (`M`) ablation on Elasticity and Darcy *(Ablation study + Reproduced)*
 
@@ -101,20 +101,20 @@ deviation: **300 epochs instead of the paper's 500**, due to limited compute. We
 and **Darcy** columns across all ten slice counts.
 Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/efficiency.csv`).
 
-**Results.** Efficiency columns are measured on a synthetic 1024-point mesh (batch size 1) and are task-agnostic.
+**Results.**
 
-| `M` | Elas, ours | Elas, paper | Darcy, ours | Darcy, paper | Peak mem (GB) | Time/ep, ours (s) | Time/ep, paper (s) |
-|---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 1 | 0.0256 | 0.0148 | 0.0460 | 0.0386 | 0.069 | 29.0 | 37.8 |
-| 8 | 0.0111 | 0.0071 | 0.0093 | 0.0096 | 0.073 | 29.3 | 37.8 |
-| 16 | 0.0130 | 0.0067 | 0.0079 | 0.0067 | 0.078 | 28.5 | 38.0 |
-| 32 | 0.0100 | 0.0067 | 0.0068 | 0.0063 | 0.087 | 28.8 | 38.0 |
-| 64 | 0.0094 | 0.0064 | 0.0062 | 0.0059 | 0.109 | 29.1 | 38.2 |
-| 96 | 0.0081 | 0.0061 | 0.0053 | 0.0055 | 0.132 | 28.6 | 38.3 |
-| 128 | 0.0085 | 0.0058 | 0.0053 | 0.0054 | 0.156 | 29.1 | 38.8 |
-| 256 | 0.0083 | **0.0054** | **0.0050** | **0.0050** | 0.254 | 29.0 | 39.1 |
-| 512 | 0.0071 | 0.0059 | 0.0056 | 0.0056 | 0.473 | 44.3 | 39.8 |
-| 1024 | **0.0059** | 0.0068 | 0.0059 | 0.0055 | 1.035 | 84.8 | 40.5 |
+| `M` | Elas, ours | Elas, paper | Darcy, ours | Darcy, paper |
+|---:|:---:|:---:|:---:|:---:|
+| 1 | 0.0256 | 0.0148 | 0.0460 | 0.0386 |
+| 8 | 0.0111 | 0.0071 | 0.0093 | 0.0096 |
+| 16 | 0.0130 | 0.0067 | 0.0079 | 0.0067 |
+| 32 | 0.0100 | 0.0067 | 0.0068 | 0.0063 |
+| 64 | 0.0094 | 0.0064 | 0.0062 | 0.0059 |
+| 96 | 0.0081 | 0.0061 | 0.0053 | 0.0055 |
+| 128 | 0.0085 | 0.0058 | 0.0053 | 0.0054 |
+| 256 | 0.0083 | **0.0054** | **0.0050** | **0.0050** |
+| 512 | 0.0071 | 0.0059 | 0.0056 | 0.0056 |
+| 1024 | **0.0059** | 0.0068 | 0.0059 | 0.0055 |
 
 **Findings.**
 
@@ -143,7 +143,51 @@ hardware.*
 
 ---
 
-### 3.2 New data — the original Transolver on aircraft surfaces *(New data)*
+### 3.2 Figure 5(a) — learned-slice visualization *(Reproduced, qualitative)*
+
+**What the paper shows.** Figure 5(a) visualizes the 64 learned slice-weight maps from the last Physics-Attention
+layer on an Elasticity sample, side by side for the **original mesh** and a **50%-resampled mesh**, to argue that
+slices capture coherent physical regions and that this assignment is robust to mesh resolution.
+
+**Our setup.** `Transolver_Irregular_Mesh`, `slice_num=64`, `n_hidden=128`, `n_heads=8`,
+`n_layers=8` (~0.71 M params), trained on Elasticity (972-point meshes) for 500 epochs (CosineAnnealing) to a final
+test **rel-L2 ≈ 0.0090** — close to the paper's main Elasticity result. `visualize_figure5a.py` extracts the
+per-point slice weights (averaged over heads → `[N, 64]`), resamples the mesh at 50–80%, and renders all 64 slices
+for both meshes.
+
+![Reproduced Figure 5(a): 64 learned slices, original (top) vs. resampled (bottom) mesh](blog_figures/figure5a__frac0.5_scatter_s3_per_slice.png)
+
+*Our reproduction of Figure 5(a): each tile is one of the 64 learned slices, rendered as a per-point scatter with
+per-slice color normalization. The top four rows are the original mesh; the bottom four are the 50%-resampled mesh.*
+
+![Paper's original Figure 5(a) for comparison](blog_figures/figure5a_paper_original.png)
+
+*The paper's original Figure 5(a) (Wu et al., 2024), reproduced here for comparison. Note how, between the original
+(top) and resampled (bottom) meshes, the corresponding tiles do **not** share colors — the discrepancy discussed
+below.*
+
+**Findings.**
+
+- **Qualitatively, the claim reproduces well:** the 64 slices learn smooth, spatially-coherent partitions of the
+  unit cell, and the resampled mesh recovers the *same* slice structure despite dropping half the points — exactly
+  the robustness Transolver advertises.
+- **One interesting discrepancy.** In *our* render, the spatial pattern of each slice **matches** between the
+  original and the resampled mesh — the same regions light up for the same slice index, regardless of which points
+  were dropped. In the **paper's** figure (shown above), the corresponding tiles show **different spatial patterns**
+  between original and resampled: the activated regions shift or reorganize across the two meshes for the same slice
+  index. Since the slice-weight function is identical for both meshes (same trained weights, same coordinates), we
+  expect the patterns to be stable — and our reproduction confirms they are. We do not know why the paper's figure
+  shows pattern-level differences across the two meshes; it is a genuine open discrepancy. What we can say is that
+  our result, where patterns are stable under resampling, **more directly supports the authors' robustness claim**
+  than the figure they published.
+
+> **Reproducibility takeaway:** reproducing a figure can surface genuine discrepancies between what a paper claims
+> and what its published figure shows — here, our reproduction actually demonstrates the robustness claim more
+> clearly than the original figure does.
+
+---
+
+### 3.3 New data — the original Transolver on aircraft surfaces *(New data)*
 
 **Motivation.** *Transolver++* introduces a **3D aircraft** dataset to argue for its new million-scale machinery.
 We asked the prior question: how well does the **original** Transolver (no Transolver++ additions) already do on
@@ -176,8 +220,6 @@ resume at epoch 168). Metric: relative-L2.
 | V (cross-flow velocity) | **0.2166** (worst) |
 | **Overall** | **0.0981** |
 
-![Aircraft per-field error](blog_figures/aircraft_per_field.png)
-
 **Findings.**
 
 - The original Transolver **trains stably and transfers to aircraft surface data out of the box**, reaching an
@@ -196,49 +238,6 @@ resume at epoch 168). Metric: relative-L2.
 
 ---
 
-### 3.3 Figure 5(a) — learned-slice visualization *(Reproduced, qualitative)*
-
-**What the paper shows.** Figure 5(a) visualizes the 64 learned slice-weight maps from the last Physics-Attention
-layer on an Elasticity sample, side by side for the **original mesh** and a **50%-resampled mesh**, to argue that
-slices capture coherent physical regions and that this assignment is robust to mesh resolution.
-
-**Our setup.** `Transolver_Irregular_Mesh`, `slice_num=64`, `n_hidden=128`, `n_heads=8`,
-`n_layers=8` (~0.71 M params), trained on Elasticity (972-point meshes) for 500 epochs (CosineAnnealing) to a final
-test **rel-L2 ≈ 0.0090** — close to the paper's main Elasticity result. `visualize_figure5a.py` extracts the
-per-point slice weights (averaged over heads → `[N, 64]`), resamples the mesh at 50–80%, and renders all 64 slices
-for both meshes.
-
-![Reproduced Figure 5(a): 64 learned slices, original (top) vs. resampled (bottom) mesh](blog_figures/figure5a__frac0.5_scatter_s3_per_slice.png)
-
-*Our reproduction of Figure 5(a): each tile is one of the 64 learned slices, rendered as a per-point scatter with
-per-slice color normalization. The top four rows are the original mesh; the bottom four are the 50%-resampled mesh.*
-
-![Paper's original Figure 5(a) for comparison](blog_figures/figure5a_paper_original.png)
-
-*The paper's original Figure 5(a) (Wu et al., 2024), reproduced here for comparison. Note how, between the original
-(top) and resampled (bottom) meshes, the corresponding tiles do **not** share colors — the discrepancy discussed
-below.*
-
-**Findings.**
-
-- **Qualitatively, the claim reproduces well:** the 64 slices learn smooth, spatially-coherent partitions of the
-  unit cell, and the resampled mesh recovers the *same* slice structure despite dropping half the points — exactly
-  the robustness Transolver advertises.
-- **One interesting discrepancy.** In *our* render, each region's color **matches** between the original and the
-  resampled mesh (if a slice is yellow in the top-left of the original, it is yellow in the top-left of the
-  resampled one). In the **paper's** figure (shown above) the corresponding tiles do **not** share colors. Since the slice-weight
-  function is identical for both meshes (same trained weights, same coordinates), we *expect* them to match — and
-  we believe **matching colors actually strengthens the authors' point**: the point-to-slice relationship carries
-  over from the original to the resampled mesh. The paper's mismatch is most plausibly a per-tile colormap /
-  normalization artifact (e.g. independent `vmax` per subplot) rather than a property of the model. We swept
-  global-vs-per-slice normalization and scatter-vs-triangulation rendering to confirm the matching is real, not an
-  artifact of *our* plotting choices.
-
-> **Reproducibility takeaway:** visualization conventions (per-subplot color normalization) can accidentally hide
-> the very property a figure is meant to demonstrate. Reproducing the figure surfaced this.
-
----
-
 ## 4. Teammate experiments
 
 ### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b) — *Nikshith Menta (Reproduced)*
@@ -248,7 +247,7 @@ Reproduction of the **design-task results (Table 3)** using the authors' code:
 - **ShapeNet-Car** (`Car-Design-ShapeNetCar/`): surface pressure / drag prediction on car geometries (requires
   `pytorch_geometric` + `torch-cluster`).
 - **AirfRANS** (`Airfoil-Design-AirfRANS/`): RANS airfoil task, `--task full` (and possibly `scarce/reynolds/aoa`).
-- **Figure 5(b)** — the *resampling-robustness* counterpart to §3.3 — rendered from the **`elas_256.pt`** checkpoint
+- **Figure 5(b)** — the *resampling-robustness* counterpart to §3.2 — rendered from the **`elas_256.pt`** checkpoint
   produced by Pepijn's `M=256` Table 4 run (a nice cross-experiment reuse).
 
 > **TODO (Nikshith):** fill in setup (hardware, epochs, hyperparameters), the metrics below, and a short discussion
@@ -420,9 +419,9 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
 
 - Physics-Attention's value is real: a single slice (`M=1`) collapses the model, and more slices substantially help
   on both Elasticity and Darcy (§3.1).
-- The learned slices are physically meaningful and **robust to mesh resampling** (§3.3).
+- The learned slices are physically meaningful and **robust to mesh resampling** (§3.2).
 - The architecture is **general**: it ports to an unseen aircraft surface dataset and trains to a sensible ~9.8%
-  error with no changes (§3.2).
+  error with no changes (§3.3).
 
 **What did not reproduce / needs a caveat:**
 
@@ -432,8 +431,10 @@ Nikshith** once the in-house Transolver reproduction numbers from §4.1 are avai
   shows that the specific large-`M` dip is **training-budget- and task-sensitive**.
 - **Efficiency numbers are hardware-specific**: absolute memory/time on 2× T4 are not comparable to the paper's, and
   only the relative scaling should be read across setups.
-- A reproduction of Figure 5(a) revealed a likely **colormap-normalization artifact** in the original figure: the
-  per-tile colors *should* match between original and resampled meshes, and in our faithful render they do.
+- A reproduction of Figure 5(a) revealed a **pattern-level discrepancy** in the original figure: the paper's figure
+  shows different spatial patterns across the original and resampled meshes for the same slice index, whereas our
+  reproduction shows stable patterns — more directly demonstrating the robustness claim. Why the paper's figure
+  differs is an open question.
 
 **Extending the paper — the "harder slice" idea splits across metrics (§4.2).** Our Transolver+ variant, which
 replaces the soft `softmax` slice assignment with a Gumbel-softmax (isolating the sequel's central "eidetic states"
