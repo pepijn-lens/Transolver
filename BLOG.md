@@ -124,9 +124,8 @@ Results are tracked in git (`logs/elas_M*.log`, `logs/darcy_M*.log`, `results/ef
    for `M=512, 1024`. In our Elasticity runs error keeps **falling monotonically through `M=1024` (best, 0.0059)**. The most
    likely cause is the **reduced 300-epoch budget**: at very large `M` the model has many more slice parameters and
    plausibly needs the full 500 epochs before over-fragmentation manifests as test-error degradation. **On Darcy, however,
-   the pattern is more nuanced**: our runs bottom out around `M=256–512` (best 0.0051 at `M=256`) and rise slightly for
-   `M=1024` (0.0059), which is qualitatively consistent with the paper's claim of a large-`M` dip. Data version,
-   seed, and hardware (T4 vs. the paper's GPU) may also contribute. *Consequence:* the paper's practical
+   the pattern does match**: our runs bottom out at `M=256' (best 0.0050) and rise slightly for 'M=512' and
+   `M=1024`, which is consistent with the paper's claim of a large-`M` dip. *Consequence:* the paper's practical
    recommendation (`M=64`, easy to tune in `[32, 256]`) is sound for efficiency, but the specific claim that
    `M=1024` is harmful appears task-dependent and budget-sensitive — confirmed on Darcy but not on Elasticity.
 3. **Absolute efficiency numbers are hardware-specific and should not be compared directly.** Our T4 peak-memory
