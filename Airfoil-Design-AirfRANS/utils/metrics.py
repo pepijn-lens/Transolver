@@ -87,7 +87,7 @@ def Infer_test(device, models, hparams, data, coef_norm=None):
             try:
                 data_sampled.edge_index = nng.radius_graph(x=data_sampled.pos.to(device), r=hparams[n]['r'], loop=True,
                                                            max_num_neighbors=int(hparams[n]['max_neighbors'])).cpu()
-            except KeyError:
+            except (KeyError, ImportError):
                 data_sampled.edge_index = None
 
             model.eval()
