@@ -7,11 +7,44 @@ import argparse
 import numpy as np
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--my_path', default='/data/path', type=str)  # data save path
-parser.add_argument('--save_path', default='./', type=str)  # model save path
+parser.add_argument('--my_path', default='/data/path', type=str,
+                    help='Path to the AirfRANS root or directly to its Dataset folder')
+parser.add_argument('--save_path', default='./', type=str,
+                    help='Root containing metrics/<task>/<model>/<model> unless --checkpoint_path is given')
+parser.add_argument('--checkpoint_path', default=None, type=str,
+                    help='Optional explicit checkpoint path. Accepts a model, a list of models, or latest_checkpoint.pth')
+parser.add_argument('-t', '--task', default='full', type=str,
+                    choices=['full', 'scarce', 'reynolds', 'aoa'])
+parser.add_argument('--model', default='Transolver', type=str)
+parser.add_argument('--results_path', default=None, type=str,
+                    help='Writable output directory. Defaults to <save_path>/scores/<task>')
+parser.add_argument('--n_test', default=3, type=int,
+                    help='Number of test airfoils to save detailed VTK/curve outputs for')
 args = parser.parse_args()
 
-# Compute the normalization used for the training
+
+def resolve_dataset_dir(path):
+    if osp.exists(osp.join(path, 'manifest.json')):
+        return path
+
+    dataset_dir = osp.join(path, 'Dataset')
+    if osp.exists(osp.join(dataset_dir, 'manifest.json')):
+        return dataset_dir
+
+    raise FileNotFoundError(
+        f'Could not find manifest.json in "{path}" or "{dataset_dir}". '
+        'Pass --my_path as either the AirfRANS root or the Dataset folder.'
+    )
+
+
+def load_model_stack(path, device):
+    loaded = torch.load(path, map_location=device, weights_only=False)
+    if isinstance(loaded, dict) and 'model' in loaded:
+        loaded = loaded['model']
+    if not isinstance(loaded, list):
+        loaded = [loaded]
+    return [model.to(device) for model in loaded]
+
 
 use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
@@ -20,18 +53,16 @@ if use_cuda:
 else:
     print('Using CPU')
 
-data_root_dir = args.my_path
+data_dir = resolve_dataset_dir(args.my_path)
 ckpt_root_dir = args.save_path
 
-tasks = ['full']
+tasks = [args.task]
 
 for task in tasks:
     print('Generating results for task ' + task + '...')
-    # task = 'full' # Choose between 'full', 'scarce', 'reynolds', and 'aoa'
     s = task + '_test' if task != 'scarce' else 'full_test'
     s_train = task + '_train'
 
-    data_dir = osp.join(data_root_dir, 'Dataset')
     with open(osp.join(data_dir, 'manifest.json'), 'r') as f:
         manifest = json.load(f)
 
@@ -43,23 +74,22 @@ for task in tasks:
 
     # Compute the scores on the test set
 
-    model_names = ['Transolver']
+    model_names = [args.model]
     models = []
     hparams = []
 
     for model in model_names:
-        model_path = osp.join(ckpt_root_dir, 'metrics', task, model, model)
-        mod = torch.load(model_path)
+        model_path = args.checkpoint_path or osp.join(ckpt_root_dir, 'metrics', task, model, model)
+        mod = load_model_stack(model_path, device)
         print(mod)
-        mod = [m.to(device) for m in mod]
         models.append(mod)
 
         with open('params.yaml', 'r') as f:
             hparam = yaml.safe_load(f)[model]
             hparams.append(hparam)
 
-    results_dir = osp.join(ckpt_root_dir, 'scores', task)
-    coefs = metrics.Results_test(device, models, hparams, coef_norm, data_dir, results_dir, n_test=3, criterion='MSE',
+    results_dir = args.results_path or osp.join(ckpt_root_dir, 'scores', task)
+    coefs = metrics.Results_test(device, models, hparams, coef_norm, data_dir, results_dir, n_test=args.n_test, criterion='MSE',
                                  s=s)
     # models can be a stack of the same model (for example MLP) on the task s, if you have another stack of another model (for example GraphSAGE)
     # you can put in model argument [models_MLP, models_GraphSAGE] and it will output the results for both models (mean and std) in an ordered array.
