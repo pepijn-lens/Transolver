@@ -239,12 +239,20 @@ resume at epoch 168). Metric: relative-L2.
 
 ## 4. Car design and algorithm experiments
 
-### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b) *(Nikshith Menta, Reproduced)*
+### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b) *(Reproduced)*
 
-I reproduced the practical-design evaluation path for **ShapeNet-Car** and set up the same Kaggle workflow for
+We reproduced the practical-design evaluation path for **ShapeNet-Car** and set up the same Kaggle workflow for
 **AirfRANS**. The important caveat is that the ShapeNet-Car code is organized as nine folds, `param0` through
-`param8`. My successful run used the authors' default `--fold_id 0`, so the held-out validation/test set is
-`param0` only. I therefore treat the result below as a **fold-0 reproduction**, not as a full nine-fold average.
+`param8`. Our successful run used the authors' default `--fold_id 0`, so the held-out validation/test set is
+`param0` only. We therefore treat the result below as a **fold-0 reproduction**, not as a full nine-fold average.
+
+**Code modifications for reproducibility.** Three changes were required to run the authors' code on Kaggle:
+
+1. **Checkpoint resume** (`main.py`): Kaggle sessions are capped at 12 hours. We added a `--resume` flag that saves a checkpoint every 10 epochs and restores training state (model weights, optimizer, epoch counter) at the start of a new session, allowing training to continue across multiple Kaggle runs.
+
+2. **Dynamic raw data path** (`drag_coefficient.py`): The original code hardcodes the authors' local path `/data/PDE_data/...` for the raw `.vtk` files needed to compute drag. We replaced this with a `--raw_data_dir` command-line argument so any user can point to their own data location.
+
+3. **Dynamic fold path splitting** (`eval.py`): The original code hardcodes the string `param0` when constructing fold paths, so evaluating any other fold would silently fail. We replaced this with dynamic splitting of the folder name, making evaluation work for `param0` through `param8`.
 
 For ShapeNet-Car, the model checkpoint was evaluated from
 `metrics/Transolver/0/200_0.5/model_200.pth` with the authors' evaluation script. The model predicts surface
@@ -264,11 +272,30 @@ Additional diagnostics from the same run were pressure RMSE `4.9253` and velocit
 `[0.1308, 0.1580, 0.4509]` (combined `0.2860`). The larger drag-coefficient error is the main mismatch, but the
 high Spearman correlation means the model still ranks car shapes nearly as in the ground truth, which is the
 design-oriented quantity emphasized in Table 3.
-*Figure 5(b) image: TODO.*
+
+For **AirfRANS**, we ran training across 4 Kaggle sessions on 2×NVIDIA T4 GPUs (~40 h total), resuming from
+checkpoint, for 398 epochs total. Configuration: L=8 layers, C=256 channels, M=32 slices, Adam lr=10⁻³, batch=1
+(matching the paper). The model has ~6 M parameters, consistent with the paper.
+
+| Task | Metric | Paper Table 3 | Our run |
+|---|---|---:|---:|
+| AirfRANS (full) | volume rel-L2 (avg, 4 fields) | 0.0037 | **~0.287** |
+| AirfRANS (full) | surface pressure rel-L2 | 0.0142 | **0.916** |
+| AirfRANS (full) | lift coefficient error `C_L` | 0.1030 | **1.01** |
+| AirfRANS (full) | Spearman `rho_L` | 0.9978 | **0.869** |
+
+The AirfRANS reproduction did not match the paper. Training loss did descend meaningfully in early epochs (0.84
+→ ~0.14 by epoch ~83), indicating the model was learning, but the evaluated metrics are 10–75× worse than
+the paper's Table 3. The most likely cause is a Kaggle-compatibility modification on this branch: radius graph
+construction was removed because `pyg-lib` is unavailable on T4 GPUs. The AirfRANS input and evaluation pipeline
+uses the radius graph to build local neighborhood features; without it, the model's input representation is
+degraded at evaluation time even if training loss descends. This is a reproducibility finding in its own right:
+environment adaptations that bypass a dependency can silently break a pipeline without producing NaN losses or
+obvious errors.
 
 ---
 
-### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car *(Jasraj Anand, New algorithm variant)*
+### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car *(New algorithm variant)*
 
 **The question.** The sequel **Transolver++** (Luo et al., ICML 2025) argues that the *soft* slice assignment in the
 original Physics-Attention smears each mesh point across many physical states, and that **harder, more distinct
@@ -314,7 +341,7 @@ ablation runs in `Transolver_plus/results/`.
 | Model / config | Layers · Slices | Params | Surf L2RE | Volume L2RE | Source |
 |---|---|---:|:---:|:---:|---|
 | Transolver (paper, Table 3) | 8 · 64 | ~6 M | **0.0745** | **0.0207** | Wu et al. 2024 |
-| Transolver (our reproduction) | N/A | N/A | *TODO §4.1* | *TODO §4.1* | N/A |
+| Transolver (our reproduction) | 8 · 64 | ~6 M | **0.0788** | **0.0250** | §4.1 |
 | **Transolver+ (main run, best)** | 4 · 32 | 1.74 M | **0.0842** | **0.0927** | `eval_results.json` (epoch 190) |
 | Transolver+ (ablation) | 4 · 32 | 1.74 M | 0.0848 | 0.0938 | `results/…L4…S32` |
 | Transolver+ (ablation) | 8 · 32 | 3.34 M | 0.0855 | 0.0866 | `results/…L8…S32` |
@@ -357,9 +384,18 @@ configs; surface error sits just above the 0.0745 baseline; volume error sits ~4
 
 ---
 
-### 4.3 Attention maps: Transolver vs. Transolver+ on ShapeNet-Car
+### 4.3 Attention maps: Elasticity and ShapeNet-Car
 
-One way to understand *why* the two models behave differently is to inspect the **token-level attention patterns**
+**Elasticity (Figure 5(b)).** The paper's Figure 5(b) compares attention maps on Elasticity between Transolver and Galerkin Transformer. We reproduced the Transolver half only; the Galerkin Transformer was not re-run.
+
+![Reproduced Figure 5(b): Transolver attention on Elasticity](blog_figures/figure5b_attn_elasticity.png)
+
+*Reproduced from Figure 5(b): last-layer attention among the M=64 physics-aware tokens in Transolver on
+Elasticity. Attention is concentrated and structured. The paper's Galerkin Transformer half (near-uniform
+mesh-point attention) was not reproduced here; the contrast between the two is described in the paper's
+Table 5 (Transolver KL-divergence 1.78 vs. Galerkin 0.38).*
+
+**ShapeNet-Car.** One way to understand *why* the two models behave differently is to inspect the **token-level attention patterns**
 of the last Physics-Attention layer on the same ShapeNet-Car sample. Each row/column in these heatmaps is one of
 the `M=32` learned slice-tokens; a bright cell at `(i, j)` means slice `i` attends strongly to slice `j`.
 
