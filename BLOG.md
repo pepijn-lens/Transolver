@@ -72,11 +72,11 @@ Following the assignment, each member owns at least one reproducibility criterio
 existing code (so the "Reproduced" family of criteria applies) and added an ablation, a new dataset, and an
 algorithm variant.
 
-| Member | Experiment(s) | Criterion / criteria | Status |
+| Member | Experiment(s) | Reproducibility criterion | Blog section |
 |---|---|---|---|
-| **Pepijn Lens** | Table 4 slice-count ablation (Elasticity); Figure 5(a) slice visualization; original Transolver on the new aircraft dataset | **Ablation study**, **Reproduced**, **New data** | ✅ §3 |
-| **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from the Table 4 run | **Reproduced** | ✅ §4.1 |
-| **Jasraj Anand** | Transolver+ (Gumbel-softmax slice assignment) on ShapeNet-Car, + depth/slice ablation; efficiency bubble chart (§5) | **New algorithm variant** (+ small ablation) | ✅ §4.2, §5 |
+| **Pepijn Lens** | Table 4 slice-count ablation on Elasticity and Darcy; Figure 5(a) learned-slice visualization; original Transolver on the new aircraft dataset | Ablation study, Reproduced, New data | §3 |
+| **Nikshith Menta** | ShapeNet-Car reproduction (Table 3); AirfRANS (Table 3); Figure 5(b) attention maps on Elasticity | Reproduced | §4.1, §4.3 |
+| **Jasraj Anand** | Transolver+ variant (Gumbel-softmax slice assignment) on ShapeNet-Car; depth/slice ablation; attention map comparison; efficiency bubble chart | New algorithm variant, Ablation study | §4.2, §4.3, §5 |
 
 > The codebase is organized as four *independent* sub-projects (`PDE-Solving-StandardBenchmark/`,
 > `Car-Design-ShapeNetCar/`, `Airfoil-Design-AirfRANS/`, and our added `Aircraft-Design/`), plus the
