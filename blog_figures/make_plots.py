@@ -278,6 +278,74 @@ def plot_transolverplus_car_ablation():
     print("wrote", out)
 
 
+def plot_bubble_chart():
+    """Bubble chart: running time vs. accuracy, bubbles sized by param count.
+    Mirrors the style of Figure 6 in the Transolver++ paper.
+    The paper's Transolver (no hardware timing available) appears as dashed
+    reference lines; timed runs are plotted as bubbles.
+    """
+    # (label, time_s_per_epoch, vol_l2re, surf_l2re, nb_params, color,
+    #  label_dx, label_dy)
+    points = [
+        # Nikshith's fold-0 reproduction; params ≈ paper ~6 M
+        ("Transolver\n(repro, fold 0)", 326.0, 0.0250, 0.0788, 6_000_000,
+         "#4e79a7", 12, -28),
+        # Jasraj's Transolver+ main run (L4·S32)
+        ("Transolver+\nL4·S32 (1.74M)", 105.0, 0.0927, 0.0842, 1_741_224,
+         "#e15759", 10, 14),
+    ]
+    paper_vol  = 0.0207
+    paper_surf = 0.0745
+
+    # Scale: 6 M params → area 800 pt² (keep bubbles readable but not oversized)
+    REF_PARAMS, REF_AREA = 6_000_000, 800
+    def bubble_area(p):
+        return REF_AREA * (p / REF_PARAMS)
+
+    configs = [
+        ("vol_l2re",  paper_vol,  "Volume L2RE (velocity field)",  "(a) Volume L2RE",  0.0, 0.14),
+        ("surf_l2re", paper_surf, "Surface L2RE (pressure)",       "(b) Surface L2RE", 0.07, 0.095),
+    ]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.2))
+
+    for ax, (metric, paper_val, ylabel, title, ylo, yhi) in zip(axes, configs):
+        ax.axhline(paper_val, color="#888888", ls="--", lw=1.5,
+                   label=f"Transolver paper ({paper_val})", zorder=1)
+
+        for label, time_s, vol, surf, params, color, dx, dy in points:
+            y = vol if metric == "vol_l2re" else surf
+            ax.scatter(time_s, y,
+                       s=bubble_area(params),
+                       c=color, alpha=0.82,
+                       edgecolors="white", linewidths=1.0, zorder=3)
+            ax.annotate(
+                label, xy=(time_s, y),
+                xytext=(dx, dy), textcoords="offset points",
+                fontsize=9, color=color, fontweight="bold",
+                arrowprops=dict(arrowstyle="-", color=color, lw=0.9),
+            )
+
+        ax.set_xlabel("Running time (s / epoch)", fontsize=11)
+        ax.set_ylabel(ylabel, fontsize=11)
+        ax.set_title(title, fontsize=12, fontweight="bold")
+        ax.legend(fontsize=8.5, loc="upper right", framealpha=0.9)
+        ax.grid(alpha=0.25)
+        ax.set_xlim(0, 450)
+        ax.set_ylim(ylo, yhi)
+
+    fig.suptitle(
+        "ShapeNet-Car: efficiency vs. accuracy\n"
+        "Bubble size ∝ parameter count  ·  Transolver paper baseline shown as dashed line",
+        fontsize=11,
+    )
+    fig.tight_layout()
+    out = os.path.join(HERE, "bubble_chart_car.png")
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    print("wrote", out)
+
+
 def main():
     plot_aircraft_curves()
     plot_aircraft_per_field()
@@ -285,6 +353,7 @@ def main():
     plot_table4_efficiency()
     plot_transolverplus_car_curves()
     plot_transolverplus_car_ablation()
+    plot_bubble_chart()
     # NOTE: the Figure 5(a) slice visualization
     # (blog_figures/figure5a__frac0.5_scatter_s3_per_slice.png) is produced by
     # PDE-Solving-StandardBenchmark/visualize_figure5a.py, not by this script.

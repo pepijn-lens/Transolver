@@ -61,8 +61,7 @@ several of our questions:
 - Are the paper's **design choices** (number of slices `M`) and **interpretability claims** (the slice
   visualization) reproducible from the released code on modest hardware?
 
-Reproduction matters because a paper's *conclusions* are only as strong as their robustness to budget, hardware,
-seeds and data. Below we report where the conclusions held and where they bent.
+Reproduction matters for a few concrete reasons. Transolver is already being cited as a baseline and extended by follow-up work, so knowing *which* of its claims are robust and which are budget- or hardware-sensitive is directly useful to anyone building on it. The paper also makes interpretability claims (the slice visualization) and efficiency claims (memory and time tables) that are easy to misread without knowing the hardware context they were measured on. Finally, the existence of Transolver++ gave us a natural hypothesis to test: the sequel's central idea is that *harder* slice assignments are better, but that claim was never tested in isolation on the original benchmarks. A reproduction is the right setting to do that test cleanly. Below we report where the conclusions held and where they bent.
 
 ---
 
@@ -76,7 +75,7 @@ algorithm variant.
 |---|---|---|---|
 | **Pepijn Lens** | Table 4 slice-count ablation (Elasticity); Figure 5(a) slice visualization; original Transolver on the new aircraft dataset | **Ablation study**, **Reproduced**, **New data** | ✅ §3 |
 | **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from Pepijn's Table 4 run | **Reproduced** | 📝 stub (§4.1) |
-| **Jasraj Anand** | Transolver+ (Gumbel-softmax slice assignment) on ShapeNet-Car, + depth/slice ablation | **New algorithm variant** (+ small ablation) | ✅ §4.2 |
+| **Jasraj Anand** | Transolver+ (Gumbel-softmax slice assignment) on ShapeNet-Car, + depth/slice ablation; efficiency bubble chart (§5) | **New algorithm variant** (+ small ablation) | ✅ §4.2, §5 |
 
 > The codebase is organized as four *independent* sub-projects (`PDE-Solving-StandardBenchmark/`,
 > `Car-Design-ShapeNetCar/`, `Airfoil-Design-AirfRANS/`, and our added `Aircraft-Design/`), plus the
@@ -238,9 +237,9 @@ resume at epoch 168). Metric: relative-L2.
 
 ---
 
-## 4. Teammate experiments
+## 4. Car design and algorithm experiments
 
-### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b), by *Nikshith Menta (Reproduced)*
+### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b) *(Nikshith Menta, Reproduced)*
 
 I reproduced the practical-design evaluation path for **ShapeNet-Car** and set up the same Kaggle workflow for
 **AirfRANS**. The important caveat is that the ShapeNet-Car code is organized as nine folds, `param0` through
@@ -269,7 +268,7 @@ design-oriented quantity emphasized in Table 3.
 
 ---
 
-### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car, by *Jasraj (New algorithm variant)*
+### 4.2 Transolver+: Gumbel-softmax slice assignment on ShapeNet-Car *(Jasraj Anand, New algorithm variant)*
 
 **The question.** The sequel **Transolver++** (Luo et al., ICML 2025) argues that the *soft* slice assignment in the
 original Physics-Attention smears each mesh point across many physical states, and that **harder, more distinct
@@ -396,22 +395,27 @@ of cross-slice context.
 
 ## 5. Performance overview: Transolver vs. Transolver+ on ShapeNet-Car
 
-The table below collects the key numbers from Jasraj's runs for reference. The bubble-chart analogue of Figure 6
-in the Transolver++ paper (running time vs. error, bubbles sized by parameter count) is deferred as a **TODO for
-Nikshith** once the in-house Transolver reproduction numbers from §4.1 are available.
+The table below collects all ShapeNet-Car numbers across our runs. The bubble chart beneath it plots running time
+vs. accuracy with bubble size proportional to parameter count. Note that the paper's Figure 6 uses GPU memory on
+the y-axis rather than error; we did not collect GPU memory during our ShapeNet-Car runs, so this is not a
+reproduction of that figure. Instead it shows the accuracy-vs-speed trade-off between our two timed runs. The
+paper's Transolver has no publicly reported per-epoch runtime on this task, so it appears only as dashed reference
+lines; Nikshith's reproduction (~326 s/epoch, A100) and Jasraj's Transolver+ main run (~105 s/epoch, A100) are
+the timed bubbles.
 
 | Model | Layers | Slices | Params | Surf L2RE | Vol L2RE | Time/epoch (s) | Hardware |
 |---|---:|---:|---:|:---:|:---:|:---:|---|
 | Transolver (paper) | 8 | 64 | ~6 M | 0.0745 | 0.0207 | N/A | N/A |
-| Transolver (repro) | N/A | N/A | N/A | *TODO §4.1* | *TODO §4.1* | *TODO §4.1* | N/A |
-| **Transolver+ (main)** | 4 | 32 | 1.74 M | 0.0842 | 0.0927 | ~104 | A100 |
+| Transolver (repro, fold 0) | 8 | 64 | ~6 M | 0.0788 | 0.0250 | ~326 | A100 |
+| **Transolver+ (main, best ckpt)** | 4 | 32 | 1.74 M | **0.0842** | **0.0927** | ~105 | A100 |
 | Transolver+ (L8·S32) | 8 | 32 | 3.34 M | 0.0855 | 0.0866 | N/A | A100 |
 
-> **TODO (Nikshith):** Once §4.1 numbers are in, produce a bubble chart analogous to Figure 6 of the Transolver++
-> paper: x-axis = running time (s/epoch), y-axis = relative L2 error (one axis per metric, or pick Vol L2RE as
-> headline), bubble size = parameter count. Plot Transolver (paper), Transolver (repro), and Transolver+
-> (main + ablation configs). The data above is ready to use; just add Nikshith's time/epoch from the reproduction
-> run. See `Transolver_plus/results/` for per-config `result.json` files.
+![ShapeNet-Car efficiency vs. accuracy bubble chart](blog_figures/bubble_chart_car.png)
+
+*Efficiency vs. accuracy on ShapeNet-Car. Each bubble is one timed run; bubble size ∝ parameter count. Left panel:
+volume (velocity) L2RE; right panel: surface (pressure) L2RE. Dashed lines mark the paper's Transolver baseline.
+Transolver+ is ~3× faster per epoch than the reproduced Transolver (smaller model, fewer layers), and nearly
+matches on surface pressure but sits ~4× above baseline on the velocity field.*
 
 ---
 
@@ -456,6 +460,15 @@ training budget, (b) efficiency tables must be read relative to hardware, (c) fi
 obscure the property a figure is meant to prove, and (d) isolating a successor's core idea (hard slice assignment)
 and reporting *both* task metrics reveals a sharp surface-vs-volume split that a single headline number would hide.
 These are exactly the kinds of robustness questions a reproduction is for.
+
+For practitioners, the findings translate into concrete advice. If you are applying Transolver on a new task with a
+limited compute budget, do not rely on the paper's large-`M` results: the degradation at `M=1024` appears only
+after the full 500-epoch schedule and may not appear at all on every task, so tune `M` on your own task rather
+than copying the paper's ablation conclusion. If you are considering adopting the "eidetic states" idea from
+Transolver++, be aware that the Gumbel-softmax change is not a free improvement: on ShapeNet-Car it nearly
+preserved surface pressure accuracy but badly hurt the surrounding velocity field, and the gap was robust across
+model sizes. The practical implication is that hard slice assignment may be worth it when your target field is
+localized and surface-like, but should be approached carefully when the field is smooth and global.
 
 ---
 
