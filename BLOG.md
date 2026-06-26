@@ -9,7 +9,8 @@
 ## TL;DR
 
 We reproduced central claims of **Transolver** (Wu et al., ICML 2024), the Transformer-based neural PDE
-solver built around *Physics-Attention*. Working from the authors' [public code](https://github.com/thuml/Transolver),
+solver built around *Physics-Attention*. Working from the authors' [public code](https://github.com/thuml/Transolver)
+(our modified version with all experiments is at [github.com/pepijn-lens/Transolver](https://github.com/pepijn-lens/Transolver)),
 we (1) re-ran the **slice-count ablation of Table 4** on Elasticity, (2) reproduced the **learned-slice
 visualization of Figure 5(a)**, (3) ported the model to a **new aircraft surface dataset** introduced by the
 follow-up *Transolver++* paper, (4) set up the **ShapeNet-Car / AirfRANS design benchmarks (Table 3)**, and (5)
@@ -74,7 +75,7 @@ algorithm variant.
 | Member | Experiment(s) | Criterion / criteria | Status |
 |---|---|---|---|
 | **Pepijn Lens** | Table 4 slice-count ablation (Elasticity); Figure 5(a) slice visualization; original Transolver on the new aircraft dataset | **Ablation study**, **Reproduced**, **New data** | ✅ §3 |
-| **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from Pepijn's Table 4 run | **Reproduced** | 📝 stub (§4.1) |
+| **Nikshith Menta** | ShapeNet-Car (Table 3); AirfRANS (Table 3); Figure 5(b) using the `elas_256.pt` checkpoint from the Table 4 run | **Reproduced** | ✅ §4.1 |
 | **Jasraj Anand** | Transolver+ (Gumbel-softmax slice assignment) on ShapeNet-Car, + depth/slice ablation; efficiency bubble chart (§5) | **New algorithm variant** (+ small ablation) | ✅ §4.2, §5 |
 
 > The codebase is organized as four *independent* sub-projects (`PDE-Solving-StandardBenchmark/`,
@@ -330,11 +331,7 @@ Original-Transolver paper baselines (Wu et al. 2024, Table 3): **Surf 0.0745, Vo
 `Transolver_plus/output/0/200_0.5/` (`summary_200.json`, `eval_results.json`, `plots/analysis_summary.json`) and the
 ablation runs in `Transolver_plus/results/`.
 
-> *Honest caveat: no in-house original-Transolver baseline.* We intended a head-to-head against the unmodified
-> Transolver, but the benchmark jobs (`benchmark_car.py`) **failed at import** twice (`No module named 'timm'`, then a
-> `torchvision::nms` op mismatch with PyTorch 2.5.1). So the original Transolver was **never run by us** on this
-> setup; the comparison below uses the **paper's** Table-3 numbers. Nikshith's §4.1 reproduction will supply the
-> matched in-house baseline.
+> *Honest caveat: no matched in-house Transolver baseline for this exact setup.* The benchmark jobs (`benchmark_car.py`) **failed at import** twice (`No module named 'timm'`, then a `torchvision::nms` op mismatch with PyTorch 2.5.1). The comparison below therefore uses the **paper's** Table-3 numbers alongside the fold-0 reproduction from §4.1.
 
 **Results.**
 
@@ -399,8 +396,7 @@ Table 5 (Transolver KL-divergence 1.78 vs. Galerkin 0.38).*
 of the last Physics-Attention layer on the same ShapeNet-Car sample. Each row/column in these heatmaps is one of
 the `M=32` learned slice-tokens; a bright cell at `(i, j)` means slice `i` attends strongly to slice `j`.
 
-**Transolver (last layer, 8 layers, `M=64`)**, produced by Nikshith from the `Car-Design-ShapeNetCar/`
-checkpoint:
+**Transolver (last layer, 8 layers, `M=64`)**, from the `Car-Design-ShapeNetCar/` checkpoint:
 
 ![Transolver: last-layer attention on Car-ShapeNet](blog_figures/transolver_car_attn_last_layer.jpg)
 
@@ -436,7 +432,7 @@ vs. accuracy with bubble size proportional to parameter count. Note that the pap
 the y-axis rather than error; we did not collect GPU memory during our ShapeNet-Car runs, so this is not a
 reproduction of that figure. Instead it shows the accuracy-vs-speed trade-off between our two timed runs. The
 paper's Transolver has no publicly reported per-epoch runtime on this task, so it appears only as dashed reference
-lines; Nikshith's reproduction (~326 s/epoch, A100) and Jasraj's Transolver+ main run (~105 s/epoch, A100) are
+lines; the fold-0 Transolver reproduction (~326 s/epoch, A100) and the Transolver+ main run (~105 s/epoch, A100) are
 the timed bubbles.
 
 | Model | Layers | Slices | Params | Surf L2RE | Vol L2RE | Time/epoch (s) | Hardware |
@@ -510,7 +506,7 @@ localized and surface-like, but should be approached carefully when the field is
 
 ## 7. Reproducing our work
 
-All experiments are merged into `main`, each in its own sub-directory:
+All experiments are in our repository at <https://github.com/pepijn-lens/Transolver>, merged into `main`, each in its own sub-directory:
 
 ```bash
 # Table 4 ablation:    PDE-Solving-StandardBenchmark/run_table4.sh + logs/elas_M*.log + results/efficiency.csv
@@ -531,4 +527,5 @@ python blog_figures/make_plots.py     # writes PNGs into blog_figures/
   Geometries.** ICML 2024. arXiv:2402.02366. Code: <https://github.com/thuml/Transolver>
 - H. Luo, H. Wu, H. Zhou, L. Xing, Y. Di, J. Wang, M. Long. **Transolver++: An Accurate Neural Solver for PDEs on
   Million-Scale Geometries.** ICML 2025. arXiv:2502.02414.
+- P. Lens, N. Menta, J. Anand. **Reproduction code and experiments** (this study). <https://github.com/pepijn-lens/Transolver>
 
