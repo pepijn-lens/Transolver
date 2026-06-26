@@ -242,27 +242,29 @@ resume at epoch 168). Metric: relative-L2.
 
 ### 4.1 ShapeNet-Car, AirfRANS, and Figure 5(b), by *Nikshith Menta (Reproduced)*
 
-Reproduction of the **design-task results (Table 3)** using the authors' code:
+I reproduced the practical-design evaluation path for **ShapeNet-Car** and set up the same Kaggle workflow for
+**AirfRANS**. The important caveat is that the ShapeNet-Car code is organized as nine folds, `param0` through
+`param8`. My successful run used the authors' default `--fold_id 0`, so the held-out validation/test set is
+`param0` only. I therefore treat the result below as a **fold-0 reproduction**, not as a full nine-fold average.
 
-- **ShapeNet-Car** (`Car-Design-ShapeNetCar/`): surface pressure / drag prediction on car geometries (requires
-  `pytorch_geometric` + `torch-cluster`).
-- **AirfRANS** (`Airfoil-Design-AirfRANS/`): RANS airfoil task, `--task full` (and possibly `scarce/reynolds/aoa`).
-- **Figure 5(b)**, the *resampling-robustness* counterpart to §3.2, rendered from the **`elas_256.pt`** checkpoint
-  produced by Pepijn's `M=256` Table 4 run (a nice cross-experiment reuse).
+For ShapeNet-Car, the model checkpoint was evaluated from
+`metrics/Transolver/0/200_0.5/model_200.pth` with the authors' evaluation script. The model predicts surface
+pressure and surrounding velocity, from which drag is computed. Despite using only fold 0, the field errors and
+rank correlation are close to Table 3: pressure is slightly worse than the paper, velocity remains close, and the
+drag ranking is reproduced well.
 
-> **TODO (Nikshith):** fill in setup (hardware, epochs, hyperparameters), the metrics below, and a short discussion
-> of whether Table 3 reproduces (volume/surface relative error, drag/lift coefficient error, Spearman rank
-> correlation). The **ShapeNet-Car surface + volume** rows below are the direct baselines for Jasraj's Transolver+
-> comparison in §4.2; once filled in, they replace the paper values used there (Jasraj's direct-comparison runs of
-> the original Transolver failed at import, so §4.2 currently leans on the paper numbers).
+| Task | Metric | Paper Table 3 | Our run |
+|---|---|---:|---:|
+| ShapeNet-Car (`param0`) | volume / velocity rel-L2 | 0.0207 | **0.0250** |
+| ShapeNet-Car (`param0`) | surface pressure rel-L2 | 0.0745 | **0.0788** |
+| ShapeNet-Car (`param0`) | drag coefficient error `C_D` | 0.0103 | **0.0232** |
+| ShapeNet-Car (`param0`) | Spearman `rho_D` | 0.9935 | **0.9858** |
+| ShapeNet-Car (`param0`) | mean inference time | N/A | **0.0107 s/sample** |
 
-| Task | Metric | Paper | Reproduction |
-|---|---|---|---|
-| ShapeNet-Car | surface-pressure rel-L2 (Surf L2RE) | 0.0745 | *TODO* (→ used by §4.2) |
-| ShapeNet-Car | volume/velocity rel-L2 (Vol L2RE) | 0.0207 | *TODO* (→ used by §4.2) |
-| ShapeNet-Car | drag coef. error / Spearman ρ | *TODO* | *TODO* |
-| AirfRANS (full) | rel. error / coef. error | *TODO* | *TODO* |
-
+Additional diagnostics from the same run were pressure RMSE `4.9253` and velocity RMSE
+`[0.1308, 0.1580, 0.4509]` (combined `0.2860`). The larger drag-coefficient error is the main mismatch, but the
+high Spearman correlation means the model still ranks car shapes nearly as in the ground truth, which is the
+design-oriented quantity emphasized in Table 3.
 *Figure 5(b) image: TODO.*
 
 ---
